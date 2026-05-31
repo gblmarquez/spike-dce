@@ -43,4 +43,27 @@ public static class CanonicalValidator
 
         return e;
     }
+
+    // Generic coded-field membership check: for each (path → table) in codedFieldsJson, the value at that
+    // path in the document must be a member of the table's version active at `date`. Returns structured errors.
+    public static IReadOnlyList<string> ValidateCoded(object document, string codedFieldsJsonPath,
+        SpikeDce.Tables.CodeTableRegistry registry, DateOnly date)
+    {
+        var errors = new List<string>();
+        var node = System.Text.Json.JsonSerializer.SerializeToNode(document, document.GetType(),
+            new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase })!;
+        using var cfg = System.Text.Json.JsonDocument.Parse(File.ReadAllText(codedFieldsJsonPath));
+        foreach (var entry in cfg.RootElement.EnumerateObject())
+        {
+            var path = entry.Name;
+            var table = entry.Value.GetString()!;
+            System.Text.Json.Nodes.JsonNode? cur = node;
+            foreach (var seg in path.Split('.')) cur = cur?[seg];
+            var code = cur?.GetValue<string>();
+            if (string.IsNullOrEmpty(code)) continue;   // absent optional coded field → skip
+            if (!registry.Validate(table, date, code))
+                errors.Add($"{path}: '{code}' is not a valid {table} code for {date:yyyy-MM-dd}");
+        }
+        return errors;
+    }
 }

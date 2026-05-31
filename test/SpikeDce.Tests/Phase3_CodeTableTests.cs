@@ -55,4 +55,18 @@ public class Phase3_CodeTableTests
         var dict = new SpikeDce.Mapping.MappingEngine().Apply(canonical, spec, ctx);
         Assert.False(string.IsNullOrEmpty((string)((Dictionary<string,object?>)dict["out"]!)["desc"]!));
     }
+
+    [Fact]
+    public void Coded_field_validator_rejects_unknown_code()
+    {
+        var reg = Reg();
+        var codedFields = Path.Combine(TestEnv.AssetsDir, "tables", "coded-fields.json");
+        var good = new CodedSample(new TaxLine("000001"), new Payment("01"));
+        var bad  = new CodedSample(new TaxLine("ZZZZZZ"), new Payment("01"));
+        var date = new DateOnly(2026, 5, 1);
+
+        Assert.Empty(SpikeDce.Canonical.CanonicalValidator.ValidateCoded(good, codedFields, reg, date));
+        var errors = SpikeDce.Canonical.CanonicalValidator.ValidateCoded(bad, codedFields, reg, date);
+        Assert.Contains(errors, e => e.Contains("taxLine.classificationCode") && e.Contains("cClassTrib"));
+    }
 }
