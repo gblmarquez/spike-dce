@@ -35,13 +35,40 @@ nProt=3532600000023909  digVal=3UVL6pGFuH7DtAF2FnnmC0kselw=  verAplic=PR-v1.0.0 
 - `dest` + items = **Bogus** synthetic (with the homologação dest-name override).
 - Issuer identity, `.pfx` path + password = **env-driven**, nothing hardcoded.
 
-## Deferred / not yet done
-- **AzTech.Net.Http `SoapClient` reuse + H5 (byte-preservation through SoapClient)** — Phase 0 used a direct sender (string passthrough preserves bytes trivially, and authorization succeeded, so the signing seam is proven viable). Vendoring AzTech + the H5 byte-capture test remain for Phase 1.
-- **Phase 1 (dynamic engine: `SchemaModel` + `SoapEnvelopeBuilder`, H1/H2/H5)** — not started; foundation (validators, signer, transport, real authorization) is in place to build on.
+## Phase 1 — Dynamic engine → ✅ PASSED
 
-## Recommendation → **GO**
-A real DCe issues and is **authorized** end-to-end with the dynamic-validation + signing + SOAP path.
-The no-recompile thesis is well-supported for Phase 1: schema is already treated as data (runtime
-`XmlSchemaSet`), the signing seam works on the real cert, and the transport is a thin string-passthrough.
-Proceed to Phase 1 (dynamic `SoapEnvelopeBuilder`) and, for production fidelity, swap in the AzTech
-`SoapClient` and add the H5 byte-preservation test.
+The hand-built XML was replaced by a **dynamic, schema-driven build** (`dict → SchemaModel → SoapEnvelopeBuilder`,
+**zero per-DCe generated classes**), reusing Phase 0's exact signer + transport. The engine-built DCe was **authorized
+live** with the same result as the hand-built one.
+
+**Evidence (engine-built, live `retDCe`):** `cStat=100 "Autorizado o uso do DCe"`, nProt `3532600000023914`,
+chDCe `…06838166`. Full suite: **12/12 green**.
+
+| # | Hypothesis | Verdict | Evidence |
+|---|-----------|---------|----------|
+| **H1** | Runtime `XmlSchemaSet` compiles **and indexes** the `DCe`/`infDCe` tree | ✅ **Confirmed (now full)** | `SchemaModel.Load` compiles the set + resolves the global `DCe` element/particle tree (`SchemaModel_resolves_DCe_root_element`) |
+| **H2** | Generic dict-driven `SoapEnvelopeBuilder` round-trips and **validates back**, zero codegen | ✅ **Confirmed** | `EngineBuilt_dce_signed_validates_xsd_and_wsdl` — engine output (signed) passes both XSD and the WSDL `<xs:any strict>` envelope, with **no per-DCe DTOs** (recursive `XmlSchemaParticle` walk over the compiled set) |
+| **H4** (reuse) | Engine-built `infDCe` enveloped-signs + self-verifies | ✅ Confirmed | `EngineBuilt_dce_self_signs_and_verifies` — `CheckSignature()` true, `#DCe`+chave reference |
+| **H5** | Signed bytes survive the transport hand-off byte-for-byte and still verify; same live `cStat` | ✅ **Confirmed (for the direct sender)** | `EngineBuilt_signed_bytes_survive_transport_and_verify` — the signed DCe appears **verbatim** in the captured POST body via `FakeEchoHandler` and re-verifies; live submit → `cStat=100` (same authorized result as Phase 0) |
+| H3 | Complex-type inheritance | N/A | DCe XSDs contain no `complexContent`/`extension` |
+
+### Phase 1 notes
+- **No-recompile thesis demonstrated, not just asserted.** The builder walks the compiled particle tree (`Sequence`/
+  `Choice`/`All`/`Element`, ref resolution, `minOccurs=0` omission, `maxOccurs>1` repetition, attribute `@name`,
+  `InvariantCulture` coercion) — a SEFAZ XSD change is absorbed by reloading the schema, with no generated classes.
+- **The signing seam stays fixed code** (per research): the engine builds the DOM, `DceSigner` signs `infDCe`, and the
+  signed `DCe` is passed to the transport as a **string** (never re-walked) — byte-preservation confirmed by H5.
+- **H5 caveat:** byte-preservation is proven for **our direct `SefazDceClient`** (string body). The original PRD H5 was
+  specific to `AzTech.Net.Http.SoapClient`; vendoring that and re-running H5 against it is the one remaining fidelity item
+  (the string-passthrough seam is identical in shape, so the risk is low).
+- ⚠️ **Dep audit:** SDK 8.0.421's offline NuGet audit flags `System.Security.Cryptography.Xml` (even the latest 9.0.9) with
+  NU1903 — appears to be a stale offline advisory DB; production must re-audit with a current SDK / patched package.
+
+## Recommendation → **GO (both phases confirmed)**
+A real DCe issues and is **authorized** end-to-end **both** hand-built **and** dynamically engine-built, with the same
+`cStat=100`. The no-recompile thesis is **demonstrated**: schema is treated as data (runtime `XmlSchemaSet` + particle
+walk, zero codegen), the fixed signing seam works on the real ICP-Brasil cert, and the signed bytes survive transport.
+Proceed to **Gate 1 PRD/TRD** with the dynamic engine as the chosen design. Remaining production-fidelity follow-ups
+(not blockers): (1) swap the direct sender for `AzTech.Net.Http.SoapClient` and re-run H5 against it; (2) refresh the
+cert-xml dependency audit on a current SDK; (3) wire the signing key from `taxpayers-certificates-api` and extend
+`tax-payers-api` with the DC-e registration type.

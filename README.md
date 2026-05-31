@@ -30,6 +30,11 @@ curl -fsS "https://brasilapi.com.br/api/cnpj/v1/${DCE_SPIKE_CNPJ}" -o "assets/is
 ## Run
 
 ```bash
-dotnet test                                   # all
-dotnet test --filter HandBuilt_dce_validates  # Phase 0 validation-first gate (XSD + WSDL)
+dotnet test                                       # all (12 tests; Phase 0 + Phase 1)
+dotnet test --filter HandBuilt_dce_validates      # Phase 0 validation-first gate (XSD + WSDL)
+dotnet test --filter Phase0                        # hand-built path incl. live authorize
+dotnet test --filter Phase1                        # dynamic engine (SchemaModel/SoapEnvelopeBuilder) incl. live authorize
 ```
+
+**Result:** a real GMBIT DCe is **authorized** by SEFAZ PR homologação (`cStat=100`) both hand-built (Phase 0) and
+dynamically engine-built (Phase 1). See `FINDINGS.md`.
