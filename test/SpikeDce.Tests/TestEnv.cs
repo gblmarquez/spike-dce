@@ -25,4 +25,6 @@ public static class TestEnv
     public static bool SefazEnabled =>
         Environment.GetEnvironmentVariable("DCE_SPIKE_PFX_PASSWORD") is not null
         && Environment.GetEnvironmentVariable("DCE_SPIKE_SKIP_SEFAZ") is null;
+
+    public static string IssuerCnpj => Environment.GetEnvironmentVariable("DCE_SPIKE_CNPJ")!;
 }

@@ -30,13 +30,15 @@ curl -fsS "https://brasilapi.com.br/api/cnpj/v1/${DCE_SPIKE_CNPJ}" -o "assets/is
 ## Run
 
 ```bash
-dotnet test                                       # all (20 tests; Phase 0 + Phase 1 + Phase 2)
+dotnet test                                       # all (27 tests; Phase 0 + Phase 1 + Phase 2 + Phase 3)
 dotnet test --filter HandBuilt_dce_validates      # Phase 0 validation-first gate (XSD + WSDL)
 dotnet test --filter Phase0                        # hand-built path incl. live authorize
 dotnet test --filter Phase1                        # dynamic engine (SchemaModel/SoapEnvelopeBuilder) incl. live authorize
 dotnet test --filter Phase2                        # canonical DespatchAdvice JSON -> declarative map -> authorized DCe
+dotnet test --filter Phase3                        # generic DFe engine: Issue + Cancel verbs through one binding-driven DfeEngine
 ```
 
 **Result:** a real GMBIT DCe is **authorized** by SEFAZ PR homologação (`cStat=100`) hand-built (Phase 0),
-dynamically engine-built (Phase 1), and via the canonical layer (Phase 2 — UBL-aligned `DespatchAdvice` JSON →
-declarative `dce_v1.00.map.json` → authorized DC-e, no code changes to the engine). See `FINDINGS.md`.
+dynamically engine-built (Phase 1), via the canonical layer (Phase 2 — UBL-aligned `DespatchAdvice` JSON →
+declarative `dce_v1.00.map.json` → authorized DC-e, no code changes to the engine), and via unified Issue + Cancel
+verbs through one binding-driven `DfeEngine` (Phase 3). See `FINDINGS.md`.

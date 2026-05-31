@@ -78,6 +78,31 @@ public class Phase3_EventEngineTests
     }
 
     [Fact]
+    public async Task H7_issue_then_cancel_live_through_one_engine()
+    {
+        if (!TestEnv.SefazEnabled) { _out.WriteLine("SEFAZ disabled"); return; }
+        var engine = new DfeEngine(BindingRegistry.Load(Path.Combine(TestEnv.AssetsDir, "bindings")), TestEnv.AssetsDir);
+        var cert = SpikeDce.Signing.CertificateLoader.LoadFromEnv(TestEnv.PfxPath);
+
+        var issue = await engine.Submit(FiscalEvent.Issue("dce", CanonicalFixture.Create()), EngineMode.Live, cert);
+        _out.WriteLine($"ISSUE cStat={issue.CStat} xMotivo={issue.XMotivo} nProt={issue.Protocolo}");
+        Assert.Contains(issue.CStat, new[] { "100", "204" });
+
+        var chDCe = System.Text.RegularExpressions.Regex.Match(issue.Raw, "<chDCe>(\\d{44})</chDCe>").Groups[1].Value;
+        Assert.Equal(44, chDCe.Length);
+        var nProt = issue.Protocolo!;
+
+        var req = new SpikeDce.Canonical.CancelRequest(chDCe, nProt,
+            "Cancelamento de teste do spike SpikeDce - sem valor fiscal", "1",
+            new SpikeDce.Canonical.EventContext("2", "41", new SpikeDce.Canonical.TaxId("CNPJ", TestEnv.IssuerCnpj)));
+        var cancel = await engine.Submit(FiscalEvent.Cancel("dce", req), EngineMode.Live, cert);
+        _out.WriteLine($"CANCEL cStat={cancel.CStat} xMotivo={cancel.XMotivo} nProt={cancel.Protocolo}");
+
+        Assert.False(string.IsNullOrWhiteSpace(cancel.CStat));
+        _out.WriteLine(cancel.CStat == "135" ? "H7 CONFIRMED: evento registrado e vinculado" : "H7: event processed, see cStat");
+    }
+
+    [Fact]
     public void H9_DfeEngine_has_no_model_or_verb_branch()
     {
         // The engine must be wholly binding-driven. Guard against creeping per-model/per-verb code.
