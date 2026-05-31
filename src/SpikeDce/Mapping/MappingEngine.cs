@@ -11,7 +11,9 @@ public sealed class MappingEngine
         foreach (var d in spec.Derive)
         {
             var o = d!.AsObject();
-            derived[o["name"]!.GetValue<string>()] = Transforms.Invoke(o["fn"]!.GetValue<string>(), ResolveArgs(o["args"]?.AsArray(), canonical, derived));
+            var name = (string)o["name"]!;
+            try { derived[name] = Transforms.Invoke((string)o["fn"]!, ResolveArgs(o["args"]?.AsArray(), canonical, derived)); }
+            catch (Exception ex) { throw new InvalidOperationException($"derive '{name}': {ex.Message}", ex); }
         }
 
         var root = new Dictionary<string, object?>();
@@ -57,6 +59,8 @@ public sealed class MappingEngine
         foreach (var a in args)
         {
             var o = a!.AsObject();
+            if (!o.ContainsKey("const") && !o.ContainsKey("from"))
+                throw new InvalidOperationException($"mapping arg must have 'const' or 'from': {o.ToJsonString()}");
             list.Add(o.ContainsKey("const") ? JsonToClr(o["const"]!) : ResolveValue(o["from"]!.GetValue<string>(), scope, derived));
         }
         return list;
@@ -111,6 +115,8 @@ public sealed class MappingEngine
 
     private static void AppendList(Dictionary<string, object?> root, string targetWithBrackets, Dictionary<string, object?> item)
     {
+        if (!targetWithBrackets.EndsWith("[]"))
+            throw new InvalidOperationException($"forEach target must end with '[]': '{targetWithBrackets}'");
         var path = targetWithBrackets[..^2]; // strip trailing "[]"
         var segs = path.Split('.');
         var cur = root;
