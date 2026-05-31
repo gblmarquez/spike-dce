@@ -125,14 +125,38 @@ Therefore: "add NF-e / CT-e = data only" is accurate for the document/event shap
 - **`cOrgao` must equal the access key's UF (same lesson as `cUF`); production should derive `cOrgao` from `chDCe[0:2]` rather than pass it as a caller-supplied value.**
 - **Suite: 27/27 green.**
 
-## Recommendation → **GO (all four phases confirmed)**
+## Phase 3 (code tables) — ✅ PASSED (H8)
+
+| # | Hypothesis | Verdict | Evidence |
+|---|-----------|---------|----------|
+| **H8** | Can XSD validate the code tables? | ✅ **Yes** | Membership for `cClassTrib`/`cCredPres`/`meiosPagamento` validated by the existing `XsdValidator` against a **generated `<xs:enumeration>` XSD per table version** — zero bespoke membership code in `CodeTableRegistry` |
+
+### What was built
+
+- **Dev-time asset generation:** `.xlsx → assets/tables/<table>/<effectiveFrom>.{xsd,lookup.json}` (committed). Code counts: `cClassTrib` 156 codes, `cCredPres` 13, `meiosPagamento` 23. Spike caps at 200 codes/table; production must lift that cap and generate the full set.
+- **Membership via XSD.** The generated XSD for each table version contains a `<xs:simpleType>` with one `<xs:enumeration>` per valid code. `XsdValidator` validates a one-element XML document built from the submitted code — the same validator used throughout Phase 0–3, zero new validation infrastructure.
+- **Enrichment + versioning via `CodeTableRegistry`.** `Lookup(table, code, date)` resolves dependent values from the lookup extract (e.g. `cCredPres` → `descricao`/`aliquotaCBS`); `Active(table, date)` returns the version whose `effectiveFrom` is ≤ the document date. Proven with two `cClassTrib` versions (effective 2026-01-01 vs 2026-04-15): a document dated in January sees only the January code set.
+- **Two integration seams, ready for NF-e/NFS-e** (DC-e itself has no coded field, so proven standalone + on a synthetic `CodedSample` document): (1) the `lookup` transform primitive in `MapContext` — a map rule can enrich a field from a registry code; (2) `CanonicalValidator.ValidateCoded(document, codedFieldsJson, registry, date)` — a generic membership hook that fires for any document type with coded fields.
+
+### Boundary / production follow-ups
+
+- The registry follows the schema-version-registry pattern (Research Finding #7). Production must generate the **full code set** (spike caps at 200) and thread the document's issue date through every `Lookup`/`Active` call.
+- `cClassTrib`, `cCredPres`, and `meiosPagamento` are the three DC-e reference tables; other DFe families add their own — the registry is generic.
+
+**Suite: 32/32 green.**
+
+## Recommendation → **GO (all five phases confirmed)**
+
 A real DCe issues and is **authorized** end-to-end in all phases — hand-built (Phase 0), dynamically
-engine-built (Phase 1), canonical-layer-mapped (Phase 2), and with event verbs via the same engine (Phase 3).
+engine-built (Phase 1), canonical-layer-mapped (Phase 2), event verbs via the same engine (Phase 3), and
+reference-table membership + enrichment via a versioned `CodeTableRegistry` with XSD-validated code sets (Phase 3 H8).
 All issue calls return `cStat=100`. The no-recompile thesis is **demonstrated**: schema is treated as data
 (runtime `XmlSchemaSet` + particle walk, zero codegen), the canonical→DC-e translation is **data** (a
-declarative `*.map.json`), and Issue/Cancel are **data-driven verbs** (different bindings + maps, same engine).
+declarative `*.map.json`), Issue/Cancel are **data-driven verbs** (different bindings + maps, same engine), and
+reference tables are handled by **generated enumeration XSDs** (membership) + a **versioned lookup registry** (enrich/date-select).
 The fixed signing seam works on the real ICP-Brasil cert, and the signed bytes survive transport.
 Proceed to **Gate 1 PRD/TRD** with the dynamic engine + canonical layer as the chosen design. Remaining
 production-fidelity follow-ups (not blockers): (1) swap the direct sender for `AzTech.Net.Http.SoapClient` and re-run
 H5 against it; (2) refresh the cert-xml dependency audit on a current SDK; (3) wire the signing key from
-`taxpayers-certificates-api` and extend `tax-payers-api` with the DC-e registration type.
+`taxpayers-certificates-api` and extend `tax-payers-api` with the DC-e registration type; (4) generate the full code
+tables (lift the 200-code spike cap) and thread the document date through `CodeTableRegistry`.
