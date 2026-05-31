@@ -45,6 +45,14 @@ public sealed class SoapEnvelopeBuilder
             case XmlSchemaSequence s: foreach (var i in s.Items) WriteParticle(w, (XmlSchemaParticle)i, ns, map); break;
             case XmlSchemaChoice c:   foreach (var i in c.Items) { if (TrySatisfied(w, (XmlSchemaParticle)i, ns, map)) break; } break;
             case XmlSchemaAll a:      foreach (var i in a.Items) WriteParticle(w, (XmlSchemaParticle)i, ns, map); break;
+            case XmlSchemaAny:
+                // xs:any wildcard — emit all non-attribute entries of the current dict as child elements.
+                foreach (var kv in map)
+                {
+                    if (kv.Key.StartsWith('@') || kv.Value is null) continue;
+                    WriteWildcardElement(w, kv.Key, ns, kv.Value);
+                }
+                break;
             case XmlSchemaElement e:
                 var name = e.RefName != null && !e.RefName.IsEmpty
                     ? _model.GlobalElement(e.RefName.Name, e.RefName.Namespace) ?? e : e;
@@ -57,6 +65,30 @@ public sealed class SoapEnvelopeBuilder
                 // minOccurs==0 with no value => omit (correct). minOccurs>=1 missing => validator flags it in the test.
                 break;
         }
+    }
+
+    // Writes a schema-free element for xs:any wildcard content, recursing into nested dicts.
+    private void WriteWildcardElement(XmlWriter w, string localName, string ns, object value)
+    {
+        w.WriteStartElement(localName, ns);
+        if (value is IReadOnlyDictionary<string, object?> map)
+        {
+            foreach (var kv in map)
+            {
+                if (kv.Key.StartsWith('@') && kv.Value is not null)
+                    w.WriteAttributeString(kv.Key[1..], ToLexical(kv.Value));
+            }
+            foreach (var kv in map)
+            {
+                if (!kv.Key.StartsWith('@') && kv.Value is not null)
+                    WriteWildcardElement(w, kv.Key, ns, kv.Value);
+            }
+        }
+        else if (value is not null)
+        {
+            w.WriteString(ToLexical(value));
+        }
+        w.WriteEndElement();
     }
 
     private bool TrySatisfied(XmlWriter w, XmlSchemaParticle p, string ns, IReadOnlyDictionary<string, object?> map)

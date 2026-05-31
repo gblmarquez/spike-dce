@@ -54,6 +54,29 @@ public class Phase3_EventEngineTests
         Assert.Equal("infEvento.@Id", reg.Resolve("dce", "cancel").SignedIdPath);
     }
 
+    [Fact]
+    public void DfeEngine_offline_issue_and_cancel_validate()
+    {
+        var engine = new DfeEngine(BindingRegistry.Load(Path.Combine(TestEnv.AssetsDir, "bindings")), TestEnv.AssetsDir);
+        var cert = SpikeDce.Signing.CertificateLoader.LoadFromEnv(TestEnv.PfxPath);
+
+        var issue = engine.BuildSigned(FiscalEvent.Issue("dce", CanonicalFixture.Create()), cert);
+        Assert.Empty(new SpikeDce.Schema.XsdValidator(TestEnv.DceXsdDir).Validate(issue.SignedXml));
+        var issEnv = $"<dceDadosMsg xmlns=\"{issue.Binding.WrapperNs}\">{issue.SignedXml}</dceDadosMsg>";
+        Assert.Empty(new SpikeDce.Schema.SoapEnvelopeXsdValidator(TestEnv.AutorizWsdl, TestEnv.DceXsdDir).ValidateEnvelope(issEnv));
+
+        var req = new SpikeDce.Canonical.CancelRequest(
+            "53260547712795000124990000005713151208020940", "3532600000023909",
+            "Cancelamento de teste do spike SpikeDce", "1",
+            new SpikeDce.Canonical.EventContext("2", "41", new SpikeDce.Canonical.TaxId("CNPJ", "47712795000124")));
+        var cancel = engine.BuildSigned(FiscalEvent.Cancel("dce", req), cert);
+        var evXsdDir = Path.Combine(TestEnv.AssetsDir, "xsd", "evento");
+        Assert.Empty(new SpikeDce.Schema.XsdValidator(evXsdDir, "eventoDCe_v1.00.xsd").Validate(cancel.SignedXml));
+        var evWsdl = Path.Combine(TestEnv.AssetsDir, "wsdl", "homologacao", "DCeRecepcaoEvento.wsdl");
+        var evEnv = $"<{cancel.Binding.WrapperElement} xmlns=\"{cancel.Binding.WrapperNs}\">{cancel.SignedXml}</{cancel.Binding.WrapperElement}>";
+        Assert.Empty(new SpikeDce.Schema.SoapEnvelopeXsdValidator(evWsdl, evXsdDir, "eventoDCe_v1.00.xsd").ValidateEnvelope(evEnv));
+    }
+
     private static readonly System.Text.Json.JsonSerializerOptions JsonOpts = new()
     {
         PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
