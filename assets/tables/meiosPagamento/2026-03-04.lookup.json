@@ -1,0 +1,75 @@
+{
+ "table": "meiosPagamento",
+ "effectiveFrom": "2026-03-04",
+ "rows": {
+  "01": {
+   "descricao": "Dinheiro"
+  },
+  "02": {
+   "descricao": "Cheque"
+  },
+  "03": {
+   "descricao": "Cartão de Crédito"
+  },
+  "04": {
+   "descricao": "Cartão de Débito"
+  },
+  "05": {
+   "descricao": "Cartão da Loja (Private Label), Crediário Digital, Outros Crediários"
+  },
+  "10": {
+   "descricao": "Vale Alimentação"
+  },
+  "11": {
+   "descricao": "Vale Refeição"
+  },
+  "12": {
+   "descricao": "Vale Presente"
+  },
+  "13": {
+   "descricao": "Vale Combustível"
+  },
+  "14": {
+   "descricao": "Duplicata Mercantil"
+  },
+  "15": {
+   "descricao": "Boleto Bancário"
+  },
+  "16": {
+   "descricao": "Depósito Bancário"
+  },
+  "17": {
+   "descricao": "Pagamento Instantâneo (PIX) - Dinâmico"
+  },
+  "18": {
+   "descricao": "TED (Transferência Eletrônica Disponível)"
+  },
+  "19": {
+   "descricao": "Programa de fidelidade, Cashback, Crédito Virtual"
+  },
+  "20": {
+   "descricao": "Pagamento Instantâneo (PIX) - Estático"
+  },
+  "21": {
+   "descricao": "Crédito em Loja"
+  },
+  "22": {
+   "descricao": "Pagamento Eletrônico não Informado - falha de hardware do sistema emissor"
+  },
+  "23": {
+   "descricao": "Pagamento Instantâneo (PIX) - Automático"
+  },
+  "24": {
+   "descricao": "TEF - \"Book Transfer\""
+  },
+  "90": {
+   "descricao": "Sem Pagamento"
+  },
+  "91": {
+   "descricao": "Pagamento Posterior"
+  },
+  "99": {
+   "descricao": "Outros"
+  }
+ }
+}
