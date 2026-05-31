@@ -67,6 +67,43 @@ public class Phase2_CanonicalEngineTests
     }
 
     [Fact]
+    public void Engine_forEach_builds_indexed_list_and_when_includes_or_omits()
+    {
+        var canonical = System.Text.Json.Nodes.JsonNode.Parse("""
+            {
+              "lines": [ { "name": "A", "qty": 1.0 }, { "name": "B", "qty": 2.0 } ],
+              "carrier": { "id": "47712795000124" },
+              "env": "2"
+            }
+            """)!;
+        var spec = MappingSpec.Parse("""
+            {
+              "rules": [
+                { "forEach": "lines", "target": "det[]", "index": "@nItem",
+                  "rules": [
+                    { "target": "prod.xProd", "from": "name" },
+                    { "target": "prod.qCom", "fn": "decimal", "args": [ { "from": "qty" }, { "const": 4 } ] }
+                  ] },
+                { "target": "transp.CNPJTransp", "from": "carrier.id", "when": "carrier != null" },
+                { "target": "dest.xNome", "const": "HOMOLOG", "when": "env == \"2\"" },
+                { "target": "dest.cpf", "from": "missing", "when": "absent != null" }
+              ]
+            }
+            """);
+        var dict = new MappingEngine().Apply(canonical, spec);
+
+        var det = (List<object?>)dict["det"]!;
+        Assert.Equal(2, det.Count);
+        var first = (Dictionary<string, object?>)det[0]!;
+        Assert.Equal("1", first["@nItem"]);
+        Assert.Equal("A", ((Dictionary<string, object?>)first["prod"]!)["xProd"]);
+        Assert.Equal("1.0000", ((Dictionary<string, object?>)first["prod"]!)["qCom"]);
+        Assert.Equal("47712795000124", ((Dictionary<string, object?>)dict["transp"]!)["CNPJTransp"]);
+        Assert.Equal("HOMOLOG", ((Dictionary<string, object?>)dict["dest"]!)["xNome"]);
+        Assert.False(dict.ContainsKey("dest") && ((Dictionary<string, object?>)dict["dest"]!).ContainsKey("cpf")); // omitted
+    }
+
+    [Fact]
     public void Transforms_cover_uf_accesskey_decimal_datetime_qrcode_concat()
     {
         Assert.Equal("53", Transforms.Invoke("ufToCode", new object?[] { "DF" }));
