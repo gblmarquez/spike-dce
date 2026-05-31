@@ -1,4 +1,5 @@
 using SpikeDce.Canonical;
+using SpikeDce.Mapping;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -37,5 +38,28 @@ public class Phase2_CanonicalEngineTests
         Assert.Contains(errors, e => e.Contains("taxId"));
         Assert.Contains(errors, e => e.Contains("despatchLines"));
         Assert.Contains(errors, e => e.Contains("environment"));
+    }
+
+    [Fact]
+    public void Transforms_cover_uf_accesskey_decimal_datetime_qrcode_concat()
+    {
+        Assert.Equal("53", Transforms.Invoke("ufToCode", new object?[] { "DF" }));
+        Assert.Equal("2605", Transforms.Invoke("aamm", new object?[] { DateTimeOffset.Parse("2026-05-16T21:55:14-03:00") }));
+
+        // access key: 9 ordered inputs → 44-digit chave whose last digit is the módulo-11 cDV
+        var chave = (string)Transforms.Invoke("accessKey", new object?[]
+            { "53", "2605", "47712795000124", "0", "1", "1", "2", "0", "100000" })!;
+        Assert.Equal(44, chave.Length);
+        Assert.Equal(chave[^1].ToString(), Transforms.Invoke("lastChar", new object?[] { chave }));
+
+        Assert.Equal("100.00", Transforms.Invoke("decimal", new object?[] { 100m, 2 }));
+        Assert.Equal("1.0000", Transforms.Invoke("decimal", new object?[] { 1m, 4 }));
+        Assert.Equal("2026-05-16T21:55:14-03:00",
+            Transforms.Invoke("dateTimeOffset", new object?[] { DateTimeOffset.Parse("2026-05-16T21:55:14-03:00") }));
+
+        var qr = (string)Transforms.Invoke("qrCode", new object?[] { chave, "2" })!;
+        Assert.StartsWith("https://www.fazenda.pr.gov.br/dce/qrcode?chDCe=" + chave + "&tpAmb=2", qr);
+        Assert.True(qr.Length >= 94);
+        Assert.Equal("DCe" + chave, Transforms.Invoke("concat", new object?[] { "DCe", chave }));
     }
 }
