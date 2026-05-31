@@ -6,8 +6,9 @@ namespace SpikeDce.Signing;
 
 public static class EnvelopedXmlSigner
 {
-    // Enveloped signature over the element with the given Id (infDCe). rsa-sha1 / sha1 / C14N, EndCertOnly, no KeyValue.
-    // The <Signature> is appended as the last child of the document element (DCe), per TDCe sequence.
+    // Enveloped rsa-sha1 signature over the element carrying the given Id (e.g. infDCe for a DCe, infEvento for an event).
+    // rsa-sha1 / sha1 / C14N, EndCertOnly, no KeyValue.
+    // Appends <Signature> as the last child of the document root (DCe / eventoDCe / any DFe root).
     public static string SignEnveloped(string xml, string referenceId, X509Certificate2 cert)
     {
         var doc = new XmlDocument { PreserveWhitespace = true };

@@ -100,6 +100,17 @@ H7 CONFIRMED: evento registrado e vinculado
 | **H7** | Issue + Cancel through ONE `DfeEngine`, live SEFAZ homologação | ✅ **Confirmed (fully)** | ISSUE `cStat=100` authorized; CANCEL `cStat=135` "Cancelamento homologado" — event registered and linked to DCe; single engine instance, no branching |
 | **H9** | `DfeEngine` has no model/verb branch (guard) | ✅ **Confirmed** | `H9_DfeEngine_has_no_model_or_verb_branch` — source scan finds zero hardcoded `"dce"/"issue"/"cancel"/"nfe"/"cte"` literals; Issue + Cancel share identical engine code paths, only binding+map data differ |
 
+### Family boundary (honest scope)
+
+The engine is generic for the **national SEFAZ DFe family** (NF-e / NFC-e / CT-e / MDF-e): all share the same 44-digit access key, enveloped rsa-sha1 XML-DSig, and SOAP 1.2 transport. Adding a new model is **data**, not code: a new `assets/bindings/<model>/<verb>.json` + its map + canonical types + XSD assets, plus a new transform primitive only when a genuinely new computation is needed.
+
+Two things are **code, not data**, and are deliberately outside this spike's scope:
+
+- **(a) NF-e / CT-e async authorization** (`enviNFe → recibo → consReciNFe`). The current `DfeEngine.Submit` models a single synchronous send. The `Binding.Sync` field is a **reserved forward seam, not yet wired**; async orchestration requires a new code path.
+- **(b) NFS-e** (per-municipality / national REST + SHA-256 + gzip). This needs a new transport + signature **profile**. The `Binding.SignatureProfile` field is likewise a **reserved forward seam, not yet wired**.
+
+Therefore: "add NF-e / CT-e = data only" is accurate for the document/event shaping + signing + synchronous transport path. The async authorization flow and NFS-e are deliberate future code additions.
+
 ### Phase 3 notes
 - **One engine, two verbs, zero branches.** `DfeEngine.Submit` is called identically for Issue and Cancel;
   the binding registry resolves `(model, verb) → (xsdDir, map, rootElement, serviceUrl, soapAction, wrapperNs, signedIdPath)`.
