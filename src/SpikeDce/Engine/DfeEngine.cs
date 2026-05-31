@@ -9,7 +9,7 @@ using SpikeDce.Transport;
 
 namespace SpikeDce.Engine;
 
-public sealed record BuiltDocument(Binding Binding, string Chave, string SignedXml);
+public sealed record BuiltDocument(Binding Binding, string SignedId, string SignedXml);
 
 public sealed class DfeEngine
 {
@@ -21,7 +21,11 @@ public sealed class DfeEngine
 
     private readonly BindingRegistry _bindings;
     private readonly string _assetsDir;
-    public DfeEngine(BindingRegistry bindings, string assetsDir) { _bindings = bindings; _assetsDir = assetsDir; }
+    public DfeEngine(BindingRegistry bindings, string assetsDir)
+    {
+        _bindings = bindings;
+        _assetsDir = assetsDir;
+    }
 
     public BuiltDocument BuildSigned(FiscalEvent ev, X509Certificate2 cert)
     {
@@ -35,8 +39,7 @@ public sealed class DfeEngine
 
         var id = (string)GetByPath(dict, b.SignedIdPath)!;
         var signed = EnvelopedXmlSigner.SignEnveloped(xml, id, cert);
-        var chave = id.StartsWith("DCe") ? id[3..] : id;
-        return new BuiltDocument(b, chave, signed);
+        return new BuiltDocument(b, id, signed);
     }
 
     public async Task<SefazRetResult> Submit(FiscalEvent ev, EngineMode mode, X509Certificate2 cert, CancellationToken ct = default)

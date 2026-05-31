@@ -47,6 +47,7 @@ public sealed class SoapEnvelopeBuilder
             case XmlSchemaAll a:      foreach (var i in a.Items) WriteParticle(w, (XmlSchemaParticle)i, ns, map); break;
             case XmlSchemaAny:
                 // xs:any wildcard — emit all non-attribute entries of the current dict as child elements.
+                // wildcard children inherit the parent ns (sufficient for DFe events; a different-ns wildcard would need ns in the data).
                 foreach (var kv in map)
                 {
                     if (kv.Key.StartsWith('@') || kv.Value is null) continue;
@@ -68,6 +69,7 @@ public sealed class SoapEnvelopeBuilder
     }
 
     // Writes a schema-free element for xs:any wildcard content, recursing into nested dicts.
+    // NOTE: list-valued entries are not expanded here — current xs:any content (evCancDCe) is a single element tree.
     private void WriteWildcardElement(XmlWriter w, string localName, string ns, object value)
     {
         w.WriteStartElement(localName, ns);
