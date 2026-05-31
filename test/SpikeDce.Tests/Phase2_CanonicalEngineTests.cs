@@ -104,6 +104,36 @@ public class Phase2_CanonicalEngineTests
     }
 
     [Fact]
+    public void Canonical_mapped_dce_signed_validates_xsd_and_wsdl()
+    {
+        var d = CanonicalFixture.Create();
+        Assert.Empty(CanonicalValidator.Validate(d));
+
+        var canonical = System.Text.Json.JsonSerializer.SerializeToNode(d, JsonOpts)!;
+        var spec = MappingSpec.Load(Path.Combine(TestEnv.AssetsDir, "mapping", "dce_v1.00.map.json"));
+        var dict = new MappingEngine().Apply(canonical, spec);
+
+        var model = SpikeDce.Schema.SchemaModel.Load(TestEnv.DceXsdDir);
+        var xml = new SpikeDce.Schema.SoapEnvelopeBuilder(model).BuildDocument("DCe", TestEnv.DceNs, dict);
+        _out.WriteLine(xml);
+        Assert.Contains(d.DespatchSupplierParty.TaxId.Value, xml);
+
+        var id = (string)((Dictionary<string, object?>)dict["infDCe"]!)["@Id"]!;
+        var chave = id[3..];
+        var signed = SpikeDce.Signing.DceSigner.SignEnveloped(xml, "DCe" + chave,
+            SpikeDce.Signing.CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
+        Assert.Empty(new SpikeDce.Schema.DceXsdValidator(TestEnv.DceXsdDir).Validate(signed));
+        var env = $"<dceDadosMsg xmlns=\"{TestEnv.WsdlNsAutoriz}\">{signed}</dceDadosMsg>";
+        Assert.Empty(new SpikeDce.Schema.DceWsdlValidator(TestEnv.AutorizWsdl, TestEnv.DceXsdDir).ValidateEnvelope(env));
+    }
+
+    private static readonly System.Text.Json.JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+    };
+
+    [Fact]
     public void Transforms_cover_uf_accesskey_decimal_datetime_qrcode_concat()
     {
         Assert.Equal("53", Transforms.Invoke("ufToCode", new object?[] { "DF" }));

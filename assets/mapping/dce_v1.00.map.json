@@ -1,0 +1,78 @@
+{
+  "derive": [
+    { "name": "cuf",   "fn": "ufToCode",  "args": [ { "from": "despatchSupplierParty.address.state" } ] },
+    { "name": "aamm",  "fn": "aamm",      "args": [ { "from": "dfe.issuedAt" } ] },
+    { "name": "chave", "fn": "accessKey", "args": [
+        { "from": "$cuf" }, { "from": "$aamm" }, { "from": "despatchSupplierParty.taxId.value" },
+        { "from": "dfe.series" }, { "from": "dfe.number" }, { "const": "1" },
+        { "from": "dfe.emissionType" }, { "from": "dfe.siteAuthorizer" }, { "from": "dfe.documentCode" } ] },
+    { "name": "cdv",   "fn": "lastChar",  "args": [ { "from": "$chave" } ] }
+  ],
+  "rules": [
+    { "target": "infDCe.@Id",     "fn": "concat", "args": [ { "const": "DCe" }, { "from": "$chave" } ] },
+    { "target": "infDCe.@versao", "const": "1.00" },
+
+    { "target": "infDCe.ide.cUF",          "from": "$cuf" },
+    { "target": "infDCe.ide.cDC",          "from": "dfe.documentCode" },
+    { "target": "infDCe.ide.mod",          "const": "99" },
+    { "target": "infDCe.ide.serie",        "from": "dfe.series" },
+    { "target": "infDCe.ide.nDC",          "from": "dfe.number" },
+    { "target": "infDCe.ide.dhEmi",        "fn": "dateTimeOffset", "args": [ { "from": "dfe.issuedAt" } ] },
+    { "target": "infDCe.ide.tpEmis",       "const": "1" },
+    { "target": "infDCe.ide.tpEmit",       "from": "dfe.emissionType" },
+    { "target": "infDCe.ide.nSiteAutoriz", "from": "dfe.siteAuthorizer" },
+    { "target": "infDCe.ide.cDV",          "from": "$cdv" },
+    { "target": "infDCe.ide.tpAmb",        "from": "dfe.environment" },
+    { "target": "infDCe.ide.verProc",      "const": "SpikeDce/1.0" },
+
+    { "target": "infDCe.emit.CNPJ",              "from": "despatchSupplierParty.taxId.value" },
+    { "target": "infDCe.emit.xNome",             "from": "despatchSupplierParty.name" },
+    { "target": "infDCe.emit.enderEmit.xLgr",    "from": "despatchSupplierParty.address.line" },
+    { "target": "infDCe.emit.enderEmit.nro",     "from": "despatchSupplierParty.address.number" },
+    { "target": "infDCe.emit.enderEmit.xCpl",    "from": "despatchSupplierParty.address.complement", "when": "despatchSupplierParty.address.complement != null" },
+    { "target": "infDCe.emit.enderEmit.xBairro", "from": "despatchSupplierParty.address.district" },
+    { "target": "infDCe.emit.enderEmit.cMun",    "from": "despatchSupplierParty.address.cityCode" },
+    { "target": "infDCe.emit.enderEmit.xMun",    "from": "despatchSupplierParty.address.cityName" },
+    { "target": "infDCe.emit.enderEmit.UF",      "from": "despatchSupplierParty.address.state" },
+    { "target": "infDCe.emit.enderEmit.CEP",     "from": "despatchSupplierParty.address.postalCode" },
+    { "target": "infDCe.emit.enderEmit.cPais",   "from": "despatchSupplierParty.address.countryCode" },
+    { "target": "infDCe.emit.enderEmit.xPais",   "from": "despatchSupplierParty.address.countryName" },
+    { "target": "infDCe.emit.enderEmit.fone",    "from": "despatchSupplierParty.address.phone", "when": "despatchSupplierParty.address.phone != null" },
+
+    { "target": "infDCe.dest.CNPJ",  "from": "deliveryCustomerParty.taxId.value", "when": "deliveryCustomerParty.taxId.scheme == \"CNPJ\"" },
+    { "target": "infDCe.dest.CPF",   "from": "deliveryCustomerParty.taxId.value", "when": "deliveryCustomerParty.taxId.scheme == \"CPF\"" },
+    { "target": "infDCe.dest.xNome", "const": "DCE EMITIDA EM AMBIENTE DE HOMOLOGACAO", "when": "dfe.environment == \"2\"" },
+    { "target": "infDCe.dest.xNome", "from": "deliveryCustomerParty.name", "when": "dfe.environment == \"1\"" },
+    { "target": "infDCe.dest.enderDest.xLgr",    "from": "deliveryCustomerParty.address.line" },
+    { "target": "infDCe.dest.enderDest.nro",     "from": "deliveryCustomerParty.address.number" },
+    { "target": "infDCe.dest.enderDest.xCpl",    "from": "deliveryCustomerParty.address.complement", "when": "deliveryCustomerParty.address.complement != null" },
+    { "target": "infDCe.dest.enderDest.xBairro", "from": "deliveryCustomerParty.address.district" },
+    { "target": "infDCe.dest.enderDest.cMun",    "from": "deliveryCustomerParty.address.cityCode" },
+    { "target": "infDCe.dest.enderDest.xMun",    "from": "deliveryCustomerParty.address.cityName" },
+    { "target": "infDCe.dest.enderDest.UF",      "from": "deliveryCustomerParty.address.state" },
+    { "target": "infDCe.dest.enderDest.CEP",     "from": "deliveryCustomerParty.address.postalCode" },
+    { "target": "infDCe.dest.enderDest.cPais",   "from": "deliveryCustomerParty.address.countryCode" },
+    { "target": "infDCe.dest.enderDest.xPais",   "from": "deliveryCustomerParty.address.countryName" },
+    { "target": "infDCe.dest.enderDest.fone",    "from": "deliveryCustomerParty.address.phone", "when": "deliveryCustomerParty.address.phone != null" },
+    { "target": "infDCe.dest.enderDest.email",   "from": "deliveryCustomerParty.address.email", "when": "deliveryCustomerParty.address.email != null" },
+
+    { "forEach": "despatchLines", "target": "infDCe.det[]", "index": "@nItem", "rules": [
+        { "target": "prod.xProd",  "from": "itemName" },
+        { "target": "prod.NCM",    "from": "commodityCode" },
+        { "target": "prod.qCom",   "fn": "decimal", "args": [ { "from": "deliveredQuantity" }, { "const": 4 } ] },
+        { "target": "prod.vUnCom", "fn": "decimal", "args": [ { "from": "unitValue" }, { "const": 2 } ] },
+        { "target": "prod.vProd",  "fn": "decimal", "args": [ { "from": "lineValue" }, { "const": 2 } ] }
+    ] },
+
+    { "target": "infDCe.total.vDC",       "fn": "decimal", "args": [ { "from": "shipment.declaredValueAmount" }, { "const": 2 } ] },
+    { "target": "infDCe.transp.modTrans", "from": "shipment.transportModeCode" },
+    { "target": "infDCe.transp.CNPJTransp", "from": "shipment.carrier.taxId.value", "when": "shipment.carrier != null" },
+
+    { "target": "infDCe.infDec.xObs1", "const": "É contribuinte de ICMS qualquer pessoa física ou jurídica, que realize, com habitualidade ou em volume que caracterize intuito comercial, operações de circulação de mercadoria ou prestações de serviços de transportes interestadual e intermunicipal e de comunicação, ainda que as operações e prestações de iniciem no exterior (Lei Complementar nº 87/96, Art. 4º)" },
+    { "target": "infDCe.infDec.xObs2", "const": "Constitui crime contra a ordem tributária suprimir ou reduzir tributo, ou contribuição social e qualquer acessório: quando negar ou deixar de fornecer, quando obrigatório, nota fiscal ou documento equivalente, relativa a venda de mercadoria ou prestação de serviço, efetivamente realizada ou fornece-la em desacordo com a legislação. Sob pena de reclusão de 2 (dois) e 5 (cinco) anos, e multa (Lei 8.137/90, Art 1ª, V)" },
+
+    { "target": "infSolicDCe.xSolic", "const": "Emissao propria de DC-e para transporte de bens." },
+    { "target": "infDCeSupl.qrCodDCe", "fn": "qrCode", "args": [ { "from": "$chave" }, { "from": "dfe.environment" } ] },
+    { "target": "infDCeSupl.urlChave", "const": "https://www.fazenda.pr.gov.br/dce/qrcode" }
+  ]
+}
