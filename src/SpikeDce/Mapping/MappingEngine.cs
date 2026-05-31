@@ -5,23 +5,23 @@ namespace SpikeDce.Mapping;
 // Interprets a MappingSpec over a canonical JsonNode → nested Dictionary<string,object?> (the builder-dict).
 public sealed class MappingEngine
 {
-    public Dictionary<string, object?> Apply(JsonNode canonical, MappingSpec spec)
+    public Dictionary<string, object?> Apply(JsonNode canonical, MappingSpec spec, MapContext? ctx = null)
     {
         var derived = new Dictionary<string, object?>();
         foreach (var d in spec.Derive)
         {
             var o = d!.AsObject();
             var name = (string)o["name"]!;
-            try { derived[name] = Transforms.Invoke((string)o["fn"]!, ResolveArgs(o["args"]?.AsArray(), canonical, derived)); }
+            try { derived[name] = Transforms.Invoke((string)o["fn"]!, ResolveArgs(o["args"]?.AsArray(), canonical, derived), ctx); }
             catch (Exception ex) { throw new InvalidOperationException($"derive '{name}': {ex.Message}", ex); }
         }
 
         var root = new Dictionary<string, object?>();
-        foreach (var r in spec.Rules) ApplyRule(r!.AsObject(), canonical, derived, root);
+        foreach (var r in spec.Rules) ApplyRule(r!.AsObject(), canonical, derived, root, ctx);
         return root;
     }
 
-    private void ApplyRule(JsonObject rule, JsonNode scope, Dictionary<string, object?> derived, Dictionary<string, object?> root)
+    private void ApplyRule(JsonObject rule, JsonNode scope, Dictionary<string, object?> derived, Dictionary<string, object?> root, MapContext? ctx = null)
     {
         if (rule["when"] is JsonValue w && !EvalWhen(w.GetValue<string>(), scope, derived)) return;
 
@@ -36,7 +36,7 @@ public sealed class MappingEngine
             {
                 var child = new Dictionary<string, object?>();
                 if (index is not null) child[index] = i.ToString();
-                foreach (var sub in subRules) ApplyRule(sub!.AsObject(), item!, derived, child);
+                foreach (var sub in subRules) ApplyRule(sub!.AsObject(), item!, derived, child, ctx);
                 AppendList(root, target, child);
                 i++;
             }
@@ -45,7 +45,7 @@ public sealed class MappingEngine
 
         object? value =
             rule["const"] is JsonNode c ? JsonToClr(c) :
-            rule["fn"] is JsonValue fn ? Transforms.Invoke(fn.GetValue<string>(), ResolveArgs(rule["args"]?.AsArray(), scope, derived)) :
+            rule["fn"] is JsonValue fn ? Transforms.Invoke(fn.GetValue<string>(), ResolveArgs(rule["args"]?.AsArray(), scope, derived), ctx) :
             rule["from"] is JsonValue from ? ResolveValue(from.GetValue<string>(), scope, derived) :
             null;
 

@@ -6,7 +6,7 @@ namespace SpikeDce.Mapping;
 // Registered primitive toolbox referenced by name from the declarative map. Algorithms (not table data).
 public static class Transforms
 {
-    public static object? Invoke(string fn, IReadOnlyList<object?> args) => fn switch
+    public static object? Invoke(string fn, IReadOnlyList<object?> args, MapContext? ctx = null) => fn switch
     {
         "ufToCode"        => UfCodes.ToCode(Str(args[0])),
         "aamm"            => ToDto(args[0]).ToString("yyMM", CultureInfo.InvariantCulture),
@@ -21,6 +21,10 @@ public static class Transforms
                                  tpEmit1: Str(args[6]), nSite1: Str(args[7]), cDC6: Str(args[8])),
         "padLeft"         => Str(args[0]).PadLeft(Convert.ToInt32(args[1]), Str(args[2])[0]),
         "now"             => DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm:sszzz", CultureInfo.InvariantCulture),
+        "lookup"          => (ctx?.Tables ?? throw new InvalidOperationException("lookup needs a MapContext with a CodeTableRegistry"))
+                                 .Lookup(Str(args[0]),
+                                         ctx!.Date ?? throw new InvalidOperationException("lookup needs MapContext.Date"),
+                                         Str(args[1]), Str(args[2])),
         _ => throw new InvalidOperationException($"unknown transform '{fn}'"),
     };
 

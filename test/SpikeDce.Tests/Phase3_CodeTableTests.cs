@@ -39,4 +39,20 @@ public class Phase3_CodeTableTests
         Assert.False(string.IsNullOrEmpty(reg.Lookup("cCredPres", new DateOnly(2026,1,1), "1", "descricao")));
         Assert.False(string.IsNullOrEmpty(reg.Lookup("meiosPagamento", new DateOnly(2026,4,1), "01", "descricao")));
     }
+
+    [Fact]
+    public void Lookup_transform_enriches_via_map_context()
+    {
+        var reg = Reg();
+        var ctx = new SpikeDce.Mapping.MapContext(reg, new DateOnly(2026, 1, 1));
+        var canonical = System.Text.Json.Nodes.JsonNode.Parse("{ \"code\": \"1\" }")!;
+        var spec = SpikeDce.Mapping.MappingSpec.Parse("""
+            { "rules": [
+                { "target": "out.desc", "fn": "lookup",
+                  "args": [ { "const": "cCredPres" }, { "from": "code" }, { "const": "descricao" } ] }
+            ] }
+            """);
+        var dict = new SpikeDce.Mapping.MappingEngine().Apply(canonical, spec, ctx);
+        Assert.False(string.IsNullOrEmpty((string)((Dictionary<string,object?>)dict["out"]!)["desc"]!));
+    }
 }
