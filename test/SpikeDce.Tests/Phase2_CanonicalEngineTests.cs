@@ -134,6 +134,32 @@ public class Phase2_CanonicalEngineTests
     };
 
     [Fact]
+    public async Task Canonical_mapped_dce_issues_against_homologacao()
+    {
+        if (!TestEnv.SefazEnabled) { _out.WriteLine("SEFAZ disabled"); return; }
+        var d = CanonicalFixture.Create();
+        Assert.Empty(CanonicalValidator.Validate(d));
+
+        var canonical = System.Text.Json.JsonSerializer.SerializeToNode(d, JsonOpts)!;
+        var spec = MappingSpec.Load(Path.Combine(TestEnv.AssetsDir, "mapping", "dce_v1.00.map.json"));
+        var dict = new MappingEngine().Apply(canonical, spec);
+
+        var model = SpikeDce.Schema.SchemaModel.Load(TestEnv.DceXsdDir);
+        var xml = new SpikeDce.Schema.SoapEnvelopeBuilder(model).BuildDocument("DCe", TestEnv.DceNs, dict);
+        var id = (string)((Dictionary<string, object?>)dict["infDCe"]!)["@Id"]!;
+        var chave = id[3..];
+        var signed = SpikeDce.Signing.DceSigner.SignEnveloped(xml, "DCe" + chave,
+            SpikeDce.Signing.CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
+
+        using var client = new SpikeDce.Transport.SefazDceClient(SpikeDce.Signing.CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
+        var (status, body) = await client.SendAsync(TestEnv.HomologAutorizUrl, TestEnv.ActionAutoriz, TestEnv.WsdlNsAutoriz, signed);
+        var r = SpikeDce.Dce.DceResult.Parse(body);
+        _out.WriteLine($"cStat={r.CStat} xMotivo={r.XMotivo} nProt={r.Protocolo}");
+        Assert.Equal(200, status);
+        Assert.Contains(r.CStat, new[] { "100", "204" }); // H6: same authorized result as Phase 0/1
+    }
+
+    [Fact]
     public void Transforms_cover_uf_accesskey_decimal_datetime_qrcode_concat()
     {
         Assert.Equal("53", Transforms.Invoke("ufToCode", new object?[] { "DF" }));

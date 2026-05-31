@@ -64,11 +64,32 @@ chDCe `…06838166`. Full suite: **12/12 green**.
 - ⚠️ **Dep audit:** SDK 8.0.421's offline NuGet audit flags `System.Security.Cryptography.Xml` (even the latest 9.0.9) with
   NU1903 — appears to be a stale offline advisory DB; production must re-audit with a current SDK / patched package.
 
-## Recommendation → **GO (both phases confirmed)**
-A real DCe issues and is **authorized** end-to-end **both** hand-built **and** dynamically engine-built, with the same
-`cStat=100`. The no-recompile thesis is **demonstrated**: schema is treated as data (runtime `XmlSchemaSet` + particle
-walk, zero codegen), the fixed signing seam works on the real ICP-Brasil cert, and the signed bytes survive transport.
-Proceed to **Gate 1 PRD/TRD** with the dynamic engine as the chosen design. Remaining production-fidelity follow-ups
-(not blockers): (1) swap the direct sender for `AzTech.Net.Http.SoapClient` and re-run H5 against it; (2) refresh the
-cert-xml dependency audit on a current SDK; (3) wire the signing key from `taxpayers-certificates-api` and extend
-`tax-payers-api` with the DC-e registration type.
+## Phase 2 — Canonical layer → ✅ PASSED
+
+A canonical `DespatchAdvice` (UBL-Despatch-aligned) was converted to an authorized DC-e via the **declarative data
+map** (`assets/mapping/dce_v1.00.map.json`), reusing the Phase-1 engine back-half with **zero code changes**.
+
+**Evidence (canonical-mapped, live `retDCe`):** `cStat=100 "Autorizado o uso do DCe"`, nProt `3532600000023919`.
+
+| # | Hypothesis | Verdict | Evidence |
+|---|-----------|---------|----------|
+| **H6** | A canonical `DespatchAdvice` → declarative map → existing engine → authorized live | ✅ **Confirmed** | `Canonical_mapped_dce_issues_against_homologacao` — `cStat=100`, nProt `3532600000023919`; full suite 20/20 green |
+
+### Phase 2 notes
+- **The canonical→DC-e mapping is data, not code.** `MappingEngine` is generic; a new national format requires only a
+  new `*.map.json` (plus a new transform primitive only when a genuinely new computation is needed). The Phase-0/1
+  engine back-half (`SchemaModel` / `SoapEnvelopeBuilder` / `DceSigner` / `SefazDceClient`) was **untouched**.
+- **`infDCeSupl` QR base / `urlChave`** point to the PR portal (national DC-e authorizer) — correct for DC-e;
+  these would be parameterized per-environment and per-state in production.
+- Suite: **20/20 green**.
+
+## Recommendation → **GO (all three phases confirmed)**
+A real DCe issues and is **authorized** end-to-end **in all three phases**: hand-built (Phase 0), dynamically
+engine-built (Phase 1), and canonical-layer-mapped (Phase 2) — all returning `cStat=100`. The no-recompile thesis is
+**demonstrated**: schema is treated as data (runtime `XmlSchemaSet` + particle walk, zero codegen), and the
+canonical→DC-e translation is **data** (a declarative `*.map.json`) rather than bespoke code. The fixed signing seam
+works on the real ICP-Brasil cert, and the signed bytes survive transport.
+Proceed to **Gate 1 PRD/TRD** with the dynamic engine + canonical layer as the chosen design. Remaining
+production-fidelity follow-ups (not blockers): (1) swap the direct sender for `AzTech.Net.Http.SoapClient` and re-run
+H5 against it; (2) refresh the cert-xml dependency audit on a current SDK; (3) wire the signing key from
+`taxpayers-certificates-api` and extend `tax-payers-api` with the DC-e registration type.
