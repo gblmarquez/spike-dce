@@ -1,0 +1,12 @@
+{
+  "model": "dce", "verb": "cancel",
+  "rootElement": "eventoDCe", "ns": "http://www.portalfiscal.inf.br/dce",
+  "xsdDir": "xsd/evento", "rootXsd": "eventoDCe_v1.00.xsd",
+  "map": "mapping/evento_cancel_v1.00.map.json", "signedIdPath": "infEvento.@Id",
+  "signatureProfile": "rsa-sha1-enveloped",
+  "wrapperElement": "dceDadosMsg", "wrapperNs": "http://www.portalfiscal.inf.br/dce/wsdl/DCeRecepcaoEvento",
+  "soapHeader": null,
+  "serviceUrl": "https://homologacao.dce.fazenda.pr.gov.br/dce/DCeRecepcaoEvento",
+  "soapAction": "http://www.portalfiscal.inf.br/dce/wsdl/DCeRecepcaoEvento/dceRecepcaoEvento",
+  "sync": true
+}

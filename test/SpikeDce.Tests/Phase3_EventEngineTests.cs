@@ -1,3 +1,4 @@
+using SpikeDce.Engine;
 using SpikeDce.Schema;
 using Xunit;
 using Xunit.Abstractions;
@@ -42,6 +43,15 @@ public class Phase3_EventEngineTests
         var ev = (Dictionary<string,object?>)det["evCancDCe"]!;
         Assert.Equal("3532600000023909", ev["nProt"]);
         Assert.Equal("Cancelamento", ev["descEvento"]);
+    }
+
+    [Fact]
+    public void BindingRegistry_resolves_dce_issue_and_cancel()
+    {
+        var reg = BindingRegistry.Load(Path.Combine(TestEnv.AssetsDir, "bindings"));
+        Assert.Equal("DCe", reg.Resolve("dce", "issue").RootElement);
+        Assert.Equal("eventoDCe", reg.Resolve("dce", "cancel").RootElement);
+        Assert.Equal("infEvento.@Id", reg.Resolve("dce", "cancel").SignedIdPath);
     }
 
     private static readonly System.Text.Json.JsonSerializerOptions JsonOpts = new()
