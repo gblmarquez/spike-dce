@@ -41,6 +41,32 @@ public class Phase2_CanonicalEngineTests
     }
 
     [Fact]
+    public void Engine_applies_const_copy_transform_and_derive()
+    {
+        var canonical = System.Text.Json.Nodes.JsonNode.Parse("""
+            { "party": { "uf": "DF", "name": "ACME" }, "amount": 100.0 }
+            """)!;
+        var spec = MappingSpec.Parse("""
+            {
+              "derive": [ { "name": "cuf", "fn": "ufToCode", "args": [ { "from": "party.uf" } ] } ],
+              "rules": [
+                { "target": "ide.mod", "const": "99" },
+                { "target": "ide.cUF", "from": "$cuf" },
+                { "target": "emit.xNome", "from": "party.name" },
+                { "target": "total.vDC", "fn": "decimal", "args": [ { "from": "amount" }, { "const": 2 } ] }
+              ]
+            }
+            """);
+        var dict = new MappingEngine().Apply(canonical, spec);
+
+        var ide = (Dictionary<string, object?>)dict["ide"]!;
+        Assert.Equal("99", ide["mod"]);
+        Assert.Equal("53", ide["cUF"]);
+        Assert.Equal("ACME", ((Dictionary<string, object?>)dict["emit"]!)["xNome"]);
+        Assert.Equal("100.00", ((Dictionary<string, object?>)dict["total"]!)["vDC"]);
+    }
+
+    [Fact]
     public void Transforms_cover_uf_accesskey_decimal_datetime_qrcode_concat()
     {
         Assert.Equal("53", Transforms.Invoke("ufToCode", new object?[] { "DF" }));
