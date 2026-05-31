@@ -6,10 +6,10 @@ namespace SpikeDce.Schema;
 
 // Validates the SOAP body wrapper dceDadosMsg AND, because its <s:any> is processContents="strict",
 // the inner DCe against dce_v1.00.xsd — all in one XmlSchemaSet.
-public sealed class DceWsdlValidator
+public sealed class SoapEnvelopeXsdValidator
 {
     private readonly XmlSchemaSet _set;
-    public DceWsdlValidator(string autorizWsdlPath, string dceXsdDir)
+    public SoapEnvelopeXsdValidator(string autorizWsdlPath, string dceXsdDir)
     {
         _set = new XmlSchemaSet { XmlResolver = new XmlUrlResolver() };
         // 1) inner DC-e schema tree (dce_v1.00.xsd → includes resolve relatively)

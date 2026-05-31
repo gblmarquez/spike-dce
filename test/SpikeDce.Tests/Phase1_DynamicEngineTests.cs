@@ -20,7 +20,7 @@ public class Phase1_DynamicEngineTests
         var model = SchemaModel.Load(TestEnv.DceXsdDir);
         var (data, chave) = HandBuiltDictFixture.Create();
         var xml = new SoapEnvelopeBuilder(model).BuildDocument("DCe", TestEnv.DceNs, data);
-        var signed = DceSigner.SignEnveloped(xml, "DCe" + chave, CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
+        var signed = EnvelopedXmlSigner.SignEnveloped(xml, "DCe" + chave, CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
         return (signed, chave);
     }
 
@@ -52,10 +52,10 @@ public class Phase1_DynamicEngineTests
         _out.WriteLine(xml);
         Assert.Contains(IssuerConfig.FromEnv().Cnpj14, xml); // emitter CNPJ present
 
-        var signed = DceSigner.SignEnveloped(xml, "DCe" + chave, CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
-        Assert.Empty(new DceXsdValidator(TestEnv.DceXsdDir).Validate(signed));
+        var signed = EnvelopedXmlSigner.SignEnveloped(xml, "DCe" + chave, CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
+        Assert.Empty(new XsdValidator(TestEnv.DceXsdDir).Validate(signed));
         var envelope = $"<dceDadosMsg xmlns=\"{TestEnv.WsdlNsAutoriz}\">{signed}</dceDadosMsg>";
-        Assert.Empty(new DceWsdlValidator(TestEnv.AutorizWsdl, TestEnv.DceXsdDir).ValidateEnvelope(envelope));
+        Assert.Empty(new SoapEnvelopeXsdValidator(TestEnv.AutorizWsdl, TestEnv.DceXsdDir).ValidateEnvelope(envelope));
     }
 
     // H4 (reuse): the engine-built DCe enveloped-signs with the real cert and self-verifies.
@@ -74,7 +74,7 @@ public class Phase1_DynamicEngineTests
     {
         var (signed, _) = BuildSignedEngine();
         var echo = new FakeEchoHandler();
-        using var client = new SefazDceClient(CertificateLoader.LoadFromEnv(TestEnv.PfxPath), echo);
+        using var client = new SefazSoapClient(CertificateLoader.LoadFromEnv(TestEnv.PfxPath), echo);
         await client.SendAsync("https://transport.test/x", TestEnv.ActionAutoriz, TestEnv.WsdlNsAutoriz, signed);
 
         Assert.NotNull(echo.CapturedBody);
@@ -93,9 +93,9 @@ public class Phase1_DynamicEngineTests
         if (!TestEnv.SefazEnabled) { _out.WriteLine("SEFAZ disabled"); return; }
         var (signed, chave) = BuildSignedEngine();
         _out.WriteLine("chave=" + chave);
-        using var client = new SefazDceClient(CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
+        using var client = new SefazSoapClient(CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
         var (status, body) = await client.SendAsync(TestEnv.HomologAutorizUrl, TestEnv.ActionAutoriz, TestEnv.WsdlNsAutoriz, signed);
-        var r = DceResult.Parse(body);
+        var r = SefazRetResult.Parse(body);
         _out.WriteLine($"cStat={r.CStat} xMotivo={r.XMotivo} nProt={r.Protocolo}");
         Assert.Equal(200, status);
         Assert.Contains(r.CStat, new[] { "100", "204" }); // same authorized result as the Phase-0 hand-built doc

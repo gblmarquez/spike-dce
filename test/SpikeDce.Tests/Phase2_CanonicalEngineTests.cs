@@ -120,11 +120,11 @@ public class Phase2_CanonicalEngineTests
 
         var id = (string)((Dictionary<string, object?>)dict["infDCe"]!)["@Id"]!;
         var chave = id[3..];
-        var signed = SpikeDce.Signing.DceSigner.SignEnveloped(xml, "DCe" + chave,
+        var signed = SpikeDce.Signing.EnvelopedXmlSigner.SignEnveloped(xml, "DCe" + chave,
             SpikeDce.Signing.CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
-        Assert.Empty(new SpikeDce.Schema.DceXsdValidator(TestEnv.DceXsdDir).Validate(signed));
+        Assert.Empty(new SpikeDce.Schema.XsdValidator(TestEnv.DceXsdDir).Validate(signed));
         var env = $"<dceDadosMsg xmlns=\"{TestEnv.WsdlNsAutoriz}\">{signed}</dceDadosMsg>";
-        Assert.Empty(new SpikeDce.Schema.DceWsdlValidator(TestEnv.AutorizWsdl, TestEnv.DceXsdDir).ValidateEnvelope(env));
+        Assert.Empty(new SpikeDce.Schema.SoapEnvelopeXsdValidator(TestEnv.AutorizWsdl, TestEnv.DceXsdDir).ValidateEnvelope(env));
     }
 
     private static readonly System.Text.Json.JsonSerializerOptions JsonOpts = new()
@@ -148,12 +148,12 @@ public class Phase2_CanonicalEngineTests
         var xml = new SpikeDce.Schema.SoapEnvelopeBuilder(model).BuildDocument("DCe", TestEnv.DceNs, dict);
         var id = (string)((Dictionary<string, object?>)dict["infDCe"]!)["@Id"]!;
         var chave = id[3..];
-        var signed = SpikeDce.Signing.DceSigner.SignEnveloped(xml, "DCe" + chave,
+        var signed = SpikeDce.Signing.EnvelopedXmlSigner.SignEnveloped(xml, "DCe" + chave,
             SpikeDce.Signing.CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
 
-        using var client = new SpikeDce.Transport.SefazDceClient(SpikeDce.Signing.CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
+        using var client = new SpikeDce.Transport.SefazSoapClient(SpikeDce.Signing.CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
         var (status, body) = await client.SendAsync(TestEnv.HomologAutorizUrl, TestEnv.ActionAutoriz, TestEnv.WsdlNsAutoriz, signed);
-        var r = SpikeDce.Dce.DceResult.Parse(body);
+        var r = SpikeDce.Dce.SefazRetResult.Parse(body);
         _out.WriteLine($"cStat={r.CStat} xMotivo={r.XMotivo} nProt={r.Protocolo}");
         Assert.Equal(200, status);
         Assert.Contains(r.CStat, new[] { "100", "204" }); // H6: same authorized result as Phase 0/1

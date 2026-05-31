@@ -18,7 +18,7 @@ public class Phase0_ManualIssuanceTests
     {
         var (xml, chave) = HandBuiltDce.Build(DceDataFixture.Create());
         var cert = CertificateLoader.LoadFromEnv(TestEnv.PfxPath);
-        var signed = DceSigner.SignEnveloped(xml, "DCe" + chave, cert);
+        var signed = EnvelopedXmlSigner.SignEnveloped(xml, "DCe" + chave, cert);
         return (signed, chave);
     }
 
@@ -35,7 +35,7 @@ public class Phase0_ManualIssuanceTests
         var (signed, chave) = BuildSigned();
         _out.WriteLine("chave=" + chave);
         _out.WriteLine(signed);
-        var errors = new DceXsdValidator(TestEnv.DceXsdDir).Validate(signed);
+        var errors = new XsdValidator(TestEnv.DceXsdDir).Validate(signed);
         Assert.True(errors.Count == 0, string.Join("\n", errors));
     }
 
@@ -44,7 +44,7 @@ public class Phase0_ManualIssuanceTests
     {
         var (signed, _) = BuildSigned();
         var envelope = $"<dceDadosMsg xmlns=\"{TestEnv.WsdlNsAutoriz}\">{signed}</dceDadosMsg>";
-        var errors = new DceWsdlValidator(TestEnv.AutorizWsdl, TestEnv.DceXsdDir).ValidateEnvelope(envelope);
+        var errors = new SoapEnvelopeXsdValidator(TestEnv.AutorizWsdl, TestEnv.DceXsdDir).ValidateEnvelope(envelope);
         Assert.True(errors.Count == 0, string.Join("\n", errors));
     }
 
@@ -55,7 +55,7 @@ public class Phase0_ManualIssuanceTests
         // a bogus inner element must produce validation errors.
         var bad = $"<dceDadosMsg xmlns=\"{TestEnv.WsdlNsAutoriz}\">" +
                   $"<DCe xmlns=\"{TestEnv.DceNs}\"><infDCe Id=\"DCe1\" versao=\"1.00\"><bogus/></infDCe></DCe></dceDadosMsg>";
-        var errors = new DceWsdlValidator(TestEnv.AutorizWsdl, TestEnv.DceXsdDir).ValidateEnvelope(bad);
+        var errors = new SoapEnvelopeXsdValidator(TestEnv.AutorizWsdl, TestEnv.DceXsdDir).ValidateEnvelope(bad);
         Assert.NotEmpty(errors);
     }
 
@@ -78,13 +78,13 @@ public class Phase0_ManualIssuanceTests
     {
         if (!TestEnv.SefazEnabled) { _out.WriteLine("SEFAZ disabled"); return; }
         var cert = CertificateLoader.LoadFromEnv(TestEnv.PfxPath);
-        using var client = new SefazDceClient(cert);
+        using var client = new SefazSoapClient(cert);
         var cuf = DceDataFixture.Create().Issuer.CUF;
         var cons = $"<consStatServDCe xmlns=\"{TestEnv.DceNs}\" versao=\"1.00\"><tpAmb>2</tpAmb><cUF>{cuf}</cUF><xServ>STATUS</xServ></consStatServDCe>";
         var (status, body) = await client.SendAsync(TestEnv.HomologStatusUrl, TestEnv.ActionStatus, TestEnv.WsdlNsStatus, cons);
         _out.WriteLine($"HTTP {status}");
         _out.WriteLine(body);
-        var r = DceResult.Parse(body);
+        var r = SefazRetResult.Parse(body);
         _out.WriteLine($"cStat={r.CStat} xMotivo={r.XMotivo}");
         Assert.Equal(200, status);
         Assert.False(string.IsNullOrWhiteSpace(r.CStat));
@@ -96,11 +96,11 @@ public class Phase0_ManualIssuanceTests
         if (!TestEnv.SefazEnabled) { _out.WriteLine("SEFAZ disabled"); return; }
         var (signed, chave) = BuildSigned();
         _out.WriteLine("chave=" + chave);
-        using var client = new SefazDceClient(CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
+        using var client = new SefazSoapClient(CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
         var (status, body) = await client.SendAsync(TestEnv.HomologAutorizUrl, TestEnv.ActionAutoriz, TestEnv.WsdlNsAutoriz, signed);
         _out.WriteLine($"HTTP {status}");
         _out.WriteLine(body);
-        var r = DceResult.Parse(body);
+        var r = SefazRetResult.Parse(body);
         _out.WriteLine($"cStat={r.CStat} xMotivo={r.XMotivo} nProt={r.Protocolo}");
         Assert.Equal(200, status);
         // H0 GATE: 100 = Autorizado (fresh key), 204 = Duplicidade (key already authorized) — both prove

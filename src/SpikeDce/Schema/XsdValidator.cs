@@ -3,10 +3,10 @@ using System.Xml.Schema;
 
 namespace SpikeDce.Schema;
 
-public sealed class DceXsdValidator
+public sealed class XsdValidator
 {
     private readonly XmlSchemaSet _set;
-    public DceXsdValidator(string dceXsdDir)
+    public XsdValidator(string dceXsdDir)
     {
         _set = new XmlSchemaSet { XmlResolver = new XmlUrlResolver() };
         using var r = XmlReader.Create(Path.Combine(dceXsdDir, "dce_v1.00.xsd")); // includes resolve relatively

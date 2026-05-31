@@ -2,9 +2,9 @@ using System.Xml.Linq;
 
 namespace SpikeDce.Dce;
 
-public sealed record DceResult(string CStat, string XMotivo, string? Protocolo, string Raw)
+public sealed record SefazRetResult(string CStat, string XMotivo, string? Protocolo, string Raw)
 {
-    public static DceResult Parse(string responseXml)
+    public static SefazRetResult Parse(string responseXml)
     {
         XNamespace d = "http://www.portalfiscal.inf.br/dce";
         try
@@ -12,11 +12,11 @@ public sealed record DceResult(string CStat, string XMotivo, string? Protocolo, 
             var x = XDocument.Parse(responseXml);
             string? F(string n) => x.Descendants(d + n).FirstOrDefault()?.Value
                                     ?? x.Descendants().FirstOrDefault(e => e.Name.LocalName == n)?.Value;
-            return new DceResult(F("cStat") ?? "(none)", F("xMotivo") ?? "", F("nProt"), responseXml);
+            return new SefazRetResult(F("cStat") ?? "(none)", F("xMotivo") ?? "", F("nProt"), responseXml);
         }
         catch
         {
-            return new DceResult("(unparseable)", "", null, responseXml);
+            return new SefazRetResult("(unparseable)", "", null, responseXml);
         }
     }
 }

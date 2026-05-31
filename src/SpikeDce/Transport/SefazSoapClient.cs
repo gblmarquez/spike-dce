@@ -6,12 +6,12 @@ namespace SpikeDce.Transport;
 // Minimal SOAP 1.2 + mTLS sender for the DC-e web services (PR/SVD).
 // Self-contained (no AzTech dependency) — sends the signed DCe as a STRING (byte-preserving),
 // wrapped in <dceDadosMsg> inside a SOAP 1.2 envelope, content-type application/soap+xml; action="...".
-public sealed class SefazDceClient : IDisposable
+public sealed class SefazSoapClient : IDisposable
 {
     private const string Soap12Ns = "http://www.w3.org/2003/05/soap-envelope";
     private readonly HttpClient _http;
 
-    public SefazDceClient(X509Certificate2 clientCert, HttpMessageHandler? inner = null)
+    public SefazSoapClient(X509Certificate2 clientCert, HttpMessageHandler? inner = null)
     {
         if (inner is null)
         {
