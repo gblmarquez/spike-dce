@@ -28,15 +28,18 @@ public sealed class SefazSoapClient : IDisposable
         _http.Timeout = TimeSpan.FromSeconds(90);
     }
 
-    // payloadXml = inner DC-e/cons XML (its own ns …/dce). wrapperNs = WSDL ns of the target service.
+    // payloadXml = inner DC-e/cons/evento XML (its own ns …/dce). wrapperNs = WSDL ns of the target service.
+    // wrapperElement defaults to dceDadosMsg; soapHeader is injected verbatim inside <soap12:Header> if set.
     // Returns (httpStatus, responseBody).
     public async Task<(int status, string body)> SendAsync(
-        string url, string action, string wrapperNs, string payloadXml, CancellationToken ct = default)
+        string url, string action, string wrapperNs, string payloadXml,
+        string wrapperElement = "dceDadosMsg", string? soapHeader = null, CancellationToken ct = default)
     {
+        var header = string.IsNullOrEmpty(soapHeader) ? "" : $"<soap12:Header>{soapHeader}</soap12:Header>";
         var soap =
-            $"<soap12:Envelope xmlns:soap12=\"{Soap12Ns}\"><soap12:Body>" +
-            $"<dceDadosMsg xmlns=\"{wrapperNs}\">{payloadXml}</dceDadosMsg>" +
-            "</soap12:Body></soap12:Envelope>";
+            $"<soap12:Envelope xmlns:soap12=\"{Soap12Ns}\">{header}<soap12:Body>" +
+            $"<{wrapperElement} xmlns=\"{wrapperNs}\">{payloadXml}</{wrapperElement}>" +
+            $"</soap12:Body></soap12:Envelope>";
 
         using var req = new HttpRequestMessage(HttpMethod.Post, url);
         var content = new StringContent(soap, new System.Text.UTF8Encoding(false));

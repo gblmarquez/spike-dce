@@ -9,10 +9,10 @@ public sealed class SchemaModel
     public XmlSchemaSet Set { get; }
     private SchemaModel(XmlSchemaSet set) => Set = set;
 
-    public static SchemaModel Load(string dceXsdDir)
+    public static SchemaModel Load(string xsdDir, string rootXsd = "dce_v1.00.xsd")
     {
         var set = new XmlSchemaSet { XmlResolver = new XmlUrlResolver() };
-        using var r = XmlReader.Create(Path.Combine(dceXsdDir, "dce_v1.00.xsd")); // includes resolve relatively
+        using var r = XmlReader.Create(Path.Combine(xsdDir, rootXsd)); // includes resolve relatively
         set.Add(null, r);
         set.Compile();
         return new SchemaModel(set);

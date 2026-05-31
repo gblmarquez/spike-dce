@@ -9,15 +9,15 @@ namespace SpikeDce.Schema;
 public sealed class SoapEnvelopeXsdValidator
 {
     private readonly XmlSchemaSet _set;
-    public SoapEnvelopeXsdValidator(string autorizWsdlPath, string dceXsdDir)
+    public SoapEnvelopeXsdValidator(string wsdlPath, string xsdDir, string rootXsd = "dce_v1.00.xsd")
     {
         _set = new XmlSchemaSet { XmlResolver = new XmlUrlResolver() };
-        // 1) inner DC-e schema tree (dce_v1.00.xsd → includes resolve relatively)
-        using (var r = XmlReader.Create(Path.Combine(dceXsdDir, "dce_v1.00.xsd"))) _set.Add(null, r);
+        // 1) inner DC-e/evento schema tree (rootXsd → includes resolve relatively)
+        using (var r = XmlReader.Create(Path.Combine(xsdDir, rootXsd))) _set.Add(null, r);
         // 2) WSDL-embedded schema(s): the dceDadosMsg wrapper element in the …/wsdl/DCeAutorizacao ns
         XNamespace wsdl = "http://schemas.xmlsoap.org/wsdl/";
         XNamespace xs   = "http://www.w3.org/2001/XMLSchema";
-        var doc = XDocument.Load(autorizWsdlPath);
+        var doc = XDocument.Load(wsdlPath);
         foreach (var schema in doc.Descendants(wsdl + "types").Elements(xs + "schema"))
             using (var sr = schema.CreateReader())
                 _set.Add(null, sr);
