@@ -24,4 +24,29 @@ public class Phase3_EventEngineTests
         var now = (string)SpikeDce.Mapping.Transforms.Invoke("now", System.Array.Empty<object?>())!;
         Assert.Matches(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[-+]\d{2}:\d{2}$", now);
     }
+
+    [Fact]
+    public void Cancel_map_builds_eventoDCe_with_signed_id()
+    {
+        var req = new SpikeDce.Canonical.CancelRequest(
+            AccessKey: "53260547712795000124990000005713151208020940",
+            Protocol: "3532600000023909", Justification: "Cancelamento de teste do spike SpikeDce",
+            Sequence: "1", Context: new SpikeDce.Canonical.EventContext("2", "41",
+                new SpikeDce.Canonical.TaxId("CNPJ", "47712795000124")));
+        var canonical = System.Text.Json.JsonSerializer.SerializeToNode(req, JsonOpts)!;
+        var spec = SpikeDce.Mapping.MappingSpec.Load(Path.Combine(TestEnv.AssetsDir, "mapping", "evento_cancel_v1.00.map.json"));
+        var dict = new SpikeDce.Mapping.MappingEngine().Apply(canonical, spec);
+        var inf = (Dictionary<string, object?>)dict["infEvento"]!;
+        Assert.Equal("ID11011153260547712795000124990000005713151208020940001", inf["@Id"]);
+        var det = (Dictionary<string,object?>)inf["detEvento"]!;
+        var ev = (Dictionary<string,object?>)det["evCancDCe"]!;
+        Assert.Equal("3532600000023909", ev["nProt"]);
+        Assert.Equal("Cancelamento", ev["descEvento"]);
+    }
+
+    private static readonly System.Text.Json.JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+    };
 }

@@ -1,0 +1,24 @@
+{
+  "derive": [
+    { "name": "tpEvento", "fn": "concat", "args": [ { "const": "110111" } ] },
+    { "name": "nSeqPadded", "fn": "padLeft", "args": [ { "from": "sequence" }, { "const": 3 }, { "const": "0" } ] },
+    { "name": "eventId", "fn": "concat", "args": [ { "const": "ID" }, { "from": "$tpEvento" }, { "from": "accessKey" }, { "from": "$nSeqPadded" } ] }
+  ],
+  "rules": [
+    { "target": "@versao",                                              "const": "1.00" },
+    { "target": "infEvento.@Id",                                        "from": "$eventId" },
+    { "target": "infEvento.cOrgao",                                     "from": "context.orgaoCode" },
+    { "target": "infEvento.tpAmb",                                      "from": "context.environment" },
+    { "target": "infEvento.tpEmit",                                     "const": "2" },
+    { "target": "infEvento.CNPJAutor",                                  "from": "context.author.value" },
+    { "target": "infEvento.CNPJUsEmit",                                 "from": "context.author.value" },
+    { "target": "infEvento.chDCe",                                      "from": "accessKey" },
+    { "target": "infEvento.dhEvento",                                   "fn": "now" },
+    { "target": "infEvento.tpEvento",                                   "from": "$tpEvento" },
+    { "target": "infEvento.nSeqEvento",                                 "from": "sequence" },
+    { "target": "infEvento.detEvento.@versaoEvento",                    "const": "1.00" },
+    { "target": "infEvento.detEvento.evCancDCe.descEvento",             "const": "Cancelamento" },
+    { "target": "infEvento.detEvento.evCancDCe.nProt",                  "from": "protocol" },
+    { "target": "infEvento.detEvento.evCancDCe.xJust",                  "from": "justification" }
+  ]
+}
