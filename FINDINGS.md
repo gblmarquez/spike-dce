@@ -90,18 +90,14 @@ registry + mapping data — **zero engine code changes** from Phase 2.
 
 **Evidence (H7 — live `retDCe` + `retEventoDCe`):**
 ```
-ISSUE  cStat=100  xMotivo="Autorizado o uso do DCe"            nProt=3532600000023981
-CANCEL cStat=455  xMotivo="Orgao Autor do evento difere da UF da Chave de Acesso"  nProt=(none)
+ISSUE  cStat=100  xMotivo="Autorizado o uso do DCe"      nProt=3532600000023986
+CANCEL cStat=135  xMotivo="Cancelamento homologado"       nProt=3532600000023987
+H7 CONFIRMED: evento registrado e vinculado
 ```
-`cStat=455` is a **business-rule rejection**, not a schema or signature error: `cOrgao=41` (PR/SVD) was used but
-the issuer (GMBIT) is registered in DF (`cUF=53`), so the PR authorizer refuses to process the event. The engine
-produced a structurally and cryptographically valid cancel envelope — proved by the fact that the SEFAZ server
-parsed and applied a business rule against it (not a 4xx/schema rejection).  Correcting to `cOrgao=53` would give
-`cStat=135` in production. This is a **data fixture issue** (wrong OrgaoCode in test), not an engine defect.
 
 | # | Hypothesis | Verdict | Evidence |
 |---|-----------|---------|----------|
-| **H7** | Issue + Cancel through ONE `DfeEngine`, live SEFAZ homologação | ✅ **Confirmed (end-to-end)** | ISSUE `cStat=100` authorized; CANCEL `cStat=455` business-rule rejection (not schema/signature); single engine instance, no branching |
+| **H7** | Issue + Cancel through ONE `DfeEngine`, live SEFAZ homologação | ✅ **Confirmed (fully)** | ISSUE `cStat=100` authorized; CANCEL `cStat=135` "Cancelamento homologado" — event registered and linked to DCe; single engine instance, no branching |
 | **H9** | `DfeEngine` has no model/verb branch (guard) | ✅ **Confirmed** | `H9_DfeEngine_has_no_model_or_verb_branch` — source scan finds zero hardcoded `"dce"/"issue"/"cancel"/"nfe"/"cte"` literals; Issue + Cancel share identical engine code paths, only binding+map data differ |
 
 ### Phase 3 notes
@@ -115,6 +111,7 @@ parsed and applied a business rule against it (not a 4xx/schema rejection).  Cor
 - **`SoapEnvelopeBuilder` xs:any support** added for events: the WSDL `<xs:any processContents="strict">`
   in `DCeRecepcaoEvento` is validated by passing the event XSD directory alongside the WSDL to
   `SoapEnvelopeXsdValidator`, the same one-`XmlSchemaSet` trick proven in Phase 0.
+- **`cOrgao` must equal the access key's UF (same lesson as `cUF`); production should derive `cOrgao` from `chDCe[0:2]` rather than pass it as a caller-supplied value.**
 - **Suite: 27/27 green.**
 
 ## Recommendation → **GO (all four phases confirmed)**
@@ -127,5 +124,4 @@ The fixed signing seam works on the real ICP-Brasil cert, and the signed bytes s
 Proceed to **Gate 1 PRD/TRD** with the dynamic engine + canonical layer as the chosen design. Remaining
 production-fidelity follow-ups (not blockers): (1) swap the direct sender for `AzTech.Net.Http.SoapClient` and re-run
 H5 against it; (2) refresh the cert-xml dependency audit on a current SDK; (3) wire the signing key from
-`taxpayers-certificates-api` and extend `tax-payers-api` with the DC-e registration type;
-(4) correct `cOrgao` to match the issuer's UF (`cUF=53` for GMBIT/DF) in cancel requests to get `cStat=135`.
+`taxpayers-certificates-api` and extend `tax-payers-api` with the DC-e registration type.

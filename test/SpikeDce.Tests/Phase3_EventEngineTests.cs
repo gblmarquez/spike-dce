@@ -32,7 +32,7 @@ public class Phase3_EventEngineTests
         var req = new SpikeDce.Canonical.CancelRequest(
             AccessKey: "53260547712795000124990000005713151208020940",
             Protocol: "3532600000023909", Justification: "Cancelamento de teste do spike SpikeDce",
-            Sequence: "1", Context: new SpikeDce.Canonical.EventContext("2", "41",
+            Sequence: "1", Context: new SpikeDce.Canonical.EventContext("2", "53", // cOrgao MUST equal the access key's UF (GMBIT = DF = 53), per SEFAZ rule (cStat 455 otherwise).
                 new SpikeDce.Canonical.TaxId("CNPJ", "47712795000124")));
         var canonical = System.Text.Json.JsonSerializer.SerializeToNode(req, JsonOpts)!;
         var spec = SpikeDce.Mapping.MappingSpec.Load(Path.Combine(TestEnv.AssetsDir, "mapping", "evento_cancel_v1.00.map.json"));
@@ -68,7 +68,7 @@ public class Phase3_EventEngineTests
         var req = new SpikeDce.Canonical.CancelRequest(
             "53260547712795000124990000005713151208020940", "3532600000023909",
             "Cancelamento de teste do spike SpikeDce", "1",
-            new SpikeDce.Canonical.EventContext("2", "41", new SpikeDce.Canonical.TaxId("CNPJ", "47712795000124")));
+            new SpikeDce.Canonical.EventContext("2", "53", new SpikeDce.Canonical.TaxId("CNPJ", "47712795000124"))); // cOrgao MUST equal the access key's UF (GMBIT = DF = 53), per SEFAZ rule (cStat 455 otherwise).
         var cancel = engine.BuildSigned(FiscalEvent.Cancel("dce", req), cert);
         var evXsdDir = Path.Combine(TestEnv.AssetsDir, "xsd", "evento");
         Assert.Empty(new SpikeDce.Schema.XsdValidator(evXsdDir, "eventoDCe_v1.00.xsd").Validate(cancel.SignedXml));
@@ -94,7 +94,7 @@ public class Phase3_EventEngineTests
 
         var req = new SpikeDce.Canonical.CancelRequest(chDCe, nProt,
             "Cancelamento de teste do spike SpikeDce - sem valor fiscal", "1",
-            new SpikeDce.Canonical.EventContext("2", "41", new SpikeDce.Canonical.TaxId("CNPJ", TestEnv.IssuerCnpj)));
+            new SpikeDce.Canonical.EventContext("2", "53", new SpikeDce.Canonical.TaxId("CNPJ", TestEnv.IssuerCnpj))); // cOrgao MUST equal the access key's UF (GMBIT = DF = 53), per SEFAZ rule (cStat 455 otherwise).
         var cancel = await engine.Submit(FiscalEvent.Cancel("dce", req), EngineMode.Live, cert);
         _out.WriteLine($"CANCEL cStat={cancel.CStat} xMotivo={cancel.XMotivo} nProt={cancel.Protocolo}");
 
