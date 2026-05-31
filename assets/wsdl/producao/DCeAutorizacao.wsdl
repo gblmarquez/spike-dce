@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='UTF-8'?><wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://www.portalfiscal.inf.br/dce/wsdl/DCeAutorizacao" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" targetNamespace="http://www.portalfiscal.inf.br/dce/wsdl/DCeAutorizacao">
+  <wsdl:types>
+<s:schema xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://www.portalfiscal.inf.br/dce/wsdl/DCeAutorizacao" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" elementFormDefault="qualified" targetNamespace="http://www.portalfiscal.inf.br/dce/wsdl/DCeAutorizacao">
+			
+  <s:element name="dceDadosMsg">
+				
+    <s:complexType mixed="true">
+					
+      <s:sequence>
+						
+        <s:any/>
+					
+      </s:sequence>
+				
+    </s:complexType>
+			
+  </s:element>
+			
+  <s:element name="dceDadosMsgZip">
+				
+    <s:simpleType>
+					
+      <s:restriction base="s:string"/>
+    			
+    </s:simpleType>
+			
+  </s:element>
+			
+  <s:element name="dceAutorizacaoResult">
+				
+    <s:complexType mixed="true">
+					
+      <s:sequence>
+						
+        <s:any/>
+					
+      </s:sequence>
+				
+    </s:complexType>
+			
+  </s:element>
+		
+</s:schema>
+  </wsdl:types>
+  <wsdl:message name="dceAutorizacaoSoap12Out">
+    <wsdl:part element="tns:dceAutorizacaoResult" name="dceAutorizacaoResult">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="dceAutorizacaoZipSoap12In">
+    <wsdl:part element="tns:dceDadosMsgZip" name="dceDadosMsgZip">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="dceAutorizacaoSoap12In">
+    <wsdl:part element="tns:dceDadosMsg" name="dceDadosMsg">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="DCeAutorizacaoSoap12">
+    <wsdl:operation name="dceAutorizacao">
+<wsdl:documentation>Transmissao descompactado da DCe</wsdl:documentation>
+      <wsdl:input message="tns:dceAutorizacaoSoap12In">
+    </wsdl:input>
+      <wsdl:output message="tns:dceAutorizacaoSoap12Out">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="dceAutorizacaoZip">
+<wsdl:documentation>Transmissao compactado da DCe</wsdl:documentation>
+      <wsdl:input message="tns:dceAutorizacaoZipSoap12In">
+    </wsdl:input>
+      <wsdl:output message="tns:dceAutorizacaoSoap12Out">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="DCeAutorizacaoSoap12" type="tns:DCeAutorizacaoSoap12">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="dceAutorizacao">
+      <soap12:operation soapAction="http://www.portalfiscal.inf.br/dce/wsdl/DCeAutorizacao/dceAutorizacao" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="dceAutorizacaoZip">
+      <soap12:operation soapAction="http://www.portalfiscal.inf.br/dce/wsdl/DCeAutorizacao/dceAutorizacaoZip" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="DCeAutorizacao">
+<wsdl:documentation>Servico destinado a recepcao de mensagens da DCe</wsdl:documentation>
+    <wsdl:port binding="tns:DCeAutorizacaoSoap12" name="DCeAutorizacaoSoap12">
+      <soap12:address location="https://dce.fazenda.pr.gov.br/dce/DCeAutorizacao"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{765D61D5-A19E-4477-8917-45AD390353C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpikeDce", "src\SpikeDce\SpikeDce.csproj", "{59001D30-712E-4A4E-A094-105039ACC1D3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{E9870BF1-7A70-4AC2-965A-5907B66BDAB8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpikeDce.Tests", "test\SpikeDce.Tests\SpikeDce.Tests.csproj", "{86797B45-6E6C-4B80-9EB6-A56AEAF934B5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{59001D30-712E-4A4E-A094-105039ACC1D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{59001D30-712E-4A4E-A094-105039ACC1D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{59001D30-712E-4A4E-A094-105039ACC1D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59001D30-712E-4A4E-A094-105039ACC1D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86797B45-6E6C-4B80-9EB6-A56AEAF934B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86797B45-6E6C-4B80-9EB6-A56AEAF934B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86797B45-6E6C-4B80-9EB6-A56AEAF934B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86797B45-6E6C-4B80-9EB6-A56AEAF934B5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{59001D30-712E-4A4E-A094-105039ACC1D3} = {765D61D5-A19E-4477-8917-45AD390353C6}
+		{86797B45-6E6C-4B80-9EB6-A56AEAF934B5} = {E9870BF1-7A70-4AC2-965A-5907B66BDAB8}
+	EndGlobalSection
+EndGlobal

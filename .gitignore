@@ -1,0 +1,6 @@
+bin/
+obj/
+*.user
+*.pfx
+*.p12
+.env
