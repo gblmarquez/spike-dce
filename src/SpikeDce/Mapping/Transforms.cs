@@ -19,6 +19,8 @@ public static class Transforms
                                  cUF: Str(args[0]), aamm: Str(args[1]), cnpj14: Str(args[2]),
                                  serie3: Str(args[3]), nDC9: Str(args[4]), tpEmis1: Str(args[5]),
                                  tpEmit1: Str(args[6]), nSite1: Str(args[7]), cDC6: Str(args[8])),
+        "padLeft"         => Str(args[0]).PadLeft(Convert.ToInt32(args[1]), Str(args[2])[0]),
+        "now"             => DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm:sszzz", CultureInfo.InvariantCulture),
         _ => throw new InvalidOperationException($"unknown transform '{fn}'"),
     };
 
