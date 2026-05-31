@@ -77,6 +77,22 @@ public class Phase3_EventEngineTests
         Assert.Empty(new SpikeDce.Schema.SoapEnvelopeXsdValidator(evWsdl, evXsdDir, "eventoDCe_v1.00.xsd").ValidateEnvelope(evEnv));
     }
 
+    [Fact]
+    public void H9_DfeEngine_has_no_model_or_verb_branch()
+    {
+        // The engine must be wholly binding-driven. Guard against creeping per-model/per-verb code.
+        var src = File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "SpikeDce", "Engine", "DfeEngine.cs"));
+        foreach (var forbidden in new[] { "\"dce\"", "\"issue\"", "\"cancel\"", "\"nfe\"", "\"cte\"" })
+            Assert.DoesNotContain(forbidden, src);
+    }
+
+    private static string FindRepoRoot()
+    {
+        var d = new DirectoryInfo(AppContext.BaseDirectory);
+        while (d is not null && !File.Exists(Path.Combine(d.FullName, "SpikeDce.sln"))) d = d.Parent;
+        return d?.FullName ?? throw new InvalidOperationException("repo root not found");
+    }
+
     private static readonly System.Text.Json.JsonSerializerOptions JsonOpts = new()
     {
         PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
