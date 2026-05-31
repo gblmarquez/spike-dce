@@ -27,7 +27,10 @@ public static class DceMockData
         decimal vTot = decimal.Round(vUn * qtd, 2);
         var items = new[] { new Item(Trunc(f.Commerce.ProductName(), 120), "49", qtd, vUn, vTot, InfAdProd: null) };
 
-        return (dest, items, vTot, "0", f.Random.Int(1, 999999).ToString(),
-                f.Random.Replace("######"), DateTimeOffset.Now);
+        // nDC + cDC are UNIQUE per run (unseeded) so each live submission is a fresh access key (avoids cStat 204 duplicidade).
+        var unique = new Randomizer();
+        var nDc  = unique.Int(1, 999_999_999).ToString();
+        var cDc6 = unique.Replace("######");
+        return (dest, items, vTot, "0", nDc, cDc6, DateTimeOffset.Now);
     }
 }

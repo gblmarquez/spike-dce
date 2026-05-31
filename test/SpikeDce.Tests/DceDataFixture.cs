@@ -15,8 +15,14 @@ public static class DceDataFixture
         var issuer = new ResolvedIssuer(cfg.Cnpj14, cuf, uf);
 
         var (dest, items, vDc, serie, nDc, cDc6, dhEmi) = DceMockData.Generate();
+
+        // Homologação (tpAmb=2) requires the destinatário name to be exactly this string (SEFAZ rule, cStat 598).
+        const string tpAmb = "2";
+        if (tpAmb == "2")
+            dest = dest with { XNome = "DCE EMITIDA EM AMBIENTE DE HOMOLOGACAO" };
+
         return new DceData(issuer, emit, dest, items, vDc,
             ModTrans: "2", CnpjTransp: emit.Cnpj14, DhEmi: dhEmi,
-            Serie: serie, NDc: nDc, CDc6: cDc6, TpAmb: "2");
+            Serie: serie, NDc: nDc, CDc6: cDc6, TpAmb: tpAmb);
     }
 }

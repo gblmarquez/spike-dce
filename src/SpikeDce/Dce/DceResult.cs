@@ -1,0 +1,22 @@
+using System.Xml.Linq;
+
+namespace SpikeDce.Dce;
+
+public sealed record DceResult(string CStat, string XMotivo, string? Protocolo, string Raw)
+{
+    public static DceResult Parse(string responseXml)
+    {
+        XNamespace d = "http://www.portalfiscal.inf.br/dce";
+        try
+        {
+            var x = XDocument.Parse(responseXml);
+            string? F(string n) => x.Descendants(d + n).FirstOrDefault()?.Value
+                                    ?? x.Descendants().FirstOrDefault(e => e.Name.LocalName == n)?.Value;
+            return new DceResult(F("cStat") ?? "(none)", F("xMotivo") ?? "", F("nProt"), responseXml);
+        }
+        catch
+        {
+            return new DceResult("(unparseable)", "", null, responseXml);
+        }
+    }
+}

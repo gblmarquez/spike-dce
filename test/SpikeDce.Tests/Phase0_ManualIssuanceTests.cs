@@ -1,6 +1,7 @@
 using SpikeDce.Dce;
 using SpikeDce.Schema;
 using SpikeDce.Signing;
+using SpikeDce.Transport;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -70,5 +71,40 @@ public class Phase0_ManualIssuanceTests
         Assert.True(sx.CheckSignature());
         Assert.Contains("xmldsig#rsa-sha1", signed);
         Assert.Contains("#DCe" + chave, signed);
+    }
+
+    [Fact]
+    public async Task StatusServico_homolog_responds()
+    {
+        if (!TestEnv.SefazEnabled) { _out.WriteLine("SEFAZ disabled"); return; }
+        var cert = CertificateLoader.LoadFromEnv(TestEnv.PfxPath);
+        using var client = new SefazDceClient(cert);
+        var cuf = DceDataFixture.Create().Issuer.CUF;
+        var cons = $"<consStatServDCe xmlns=\"{TestEnv.DceNs}\" versao=\"1.00\"><tpAmb>2</tpAmb><cUF>{cuf}</cUF><xServ>STATUS</xServ></consStatServDCe>";
+        var (status, body) = await client.SendAsync(TestEnv.HomologStatusUrl, TestEnv.ActionStatus, TestEnv.WsdlNsStatus, cons);
+        _out.WriteLine($"HTTP {status}");
+        _out.WriteLine(body);
+        var r = DceResult.Parse(body);
+        _out.WriteLine($"cStat={r.CStat} xMotivo={r.XMotivo}");
+        Assert.Equal(200, status);
+        Assert.False(string.IsNullOrWhiteSpace(r.CStat));
+    }
+
+    [Fact]
+    public async Task HandBuilt_dce_issues_against_homologacao()
+    {
+        if (!TestEnv.SefazEnabled) { _out.WriteLine("SEFAZ disabled"); return; }
+        var (signed, chave) = BuildSigned();
+        _out.WriteLine("chave=" + chave);
+        using var client = new SefazDceClient(CertificateLoader.LoadFromEnv(TestEnv.PfxPath));
+        var (status, body) = await client.SendAsync(TestEnv.HomologAutorizUrl, TestEnv.ActionAutoriz, TestEnv.WsdlNsAutoriz, signed);
+        _out.WriteLine($"HTTP {status}");
+        _out.WriteLine(body);
+        var r = DceResult.Parse(body);
+        _out.WriteLine($"cStat={r.CStat} xMotivo={r.XMotivo} nProt={r.Protocolo}");
+        Assert.Equal(200, status);
+        // H0 GATE: 100 = Autorizado (fresh key), 204 = Duplicidade (key already authorized) — both prove
+        // the request was well-formed + signature-valid + schema-valid and fully processed by SEFAZ.
+        Assert.Contains(r.CStat, new[] { "100", "204" });
     }
 }
